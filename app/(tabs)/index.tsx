@@ -1,98 +1,176 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+//clientID 927f132e-b18b-47c4-9d84-8225138c02c4
+//tenantID 9c88b83f-6b00-42a9-a985-8091fbea96f3
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+//ios 
+// msauth.com.anonymous.googleAuth://auth
+// let kClientID = "927f132e-b18b-47c4-9d84-8225138c02c4"
+// let kRedirectUri = "msauth.com.anonymous.googleAuth://auth"
+// let kAuthority = "https://login.microsoftonline.com/common"
+// let kGraphEndpoint = "https://graph.microsoft.com/"
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+//android
+// msauth://com.anonymous.googleAuth/%2B9XO3lXCJsG%2BP2tcA9odlnnAyMk%3D
+// {
+//   "client_id" : "927f132e-b18b-47c4-9d84-8225138c02c4",
+//   "authorization_user_agent" : "DEFAULT",
+//   "redirect_uri" : "msauth://com.anonymous.googleAuth/%2B9XO3lXCJsG%2BP2tcA9odlnnAyMk%3D",
+//   "authorities" : [
+//     {
+//       "type": "AAD",
+//       "audience": {
+//         "type": "AzureADandPersonalMicrosoftAccount",
+//         "tenant_id": "common"
+//       }
+//     }
+//   ]
+// }
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+
+
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as AuthSession from 'expo-auth-session';
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from 'expo-web-browser';
+import React, { useEffect, useState } from 'react';
+import { Button, StyleSheet, Text, View } from 'react-native';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const MS_CLIENT_ID = "927f132e-b18b-47c4-9d84-8225138c02c4";
+const MS_REDIRECT_URI = "msauth.com.anonymous.googleAuth://auth";
+
+const msDiscovery = {
+  authorizationEndpoint: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+  tokenEndpoint: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+};
+
+
+export default function TabScreen() {
+  const [googleUserInfo , setGoogleUserInfo ] = useState(null);
+  const [microsoftUserInfo , setMicrosoftUserInfo ] = useState(null);
+  const [googleRequest,googleResponse,googlePromptAsync] = Google.useAuthRequest({
+    androidClientId:"567214050375-mq65glmgop4m7kblmh8o4r6gn2gecapn.apps.googleusercontent.com",
+    iosClientId: "567214050375-4jstuf30dbvr9lfuicf0mk6g3v5smqaa.apps.googleusercontent.com",
+    webClientId: '567214050375-6nmenaun0puabssou05m0er5tc7dof77.apps.googleusercontent.com',
+  });
+
+  const [microsoftRequest,microsoftResponse,microsoftPromptAsync] = AuthSession.useAuthRequest({
+    clientId: MS_CLIENT_ID,
+    redirectUri: MS_REDIRECT_URI,
+    scopes: ['openid', 'profile', 'User.Read',"Files.Read"],
+  }, msDiscovery);
+
+  useEffect(()=>{
+    handleSignInWithGoogle();
+  },[googleResponse])
+
+  useEffect(()=>{
+    handleSignInWithMicrosoft();
+  },[microsoftResponse])
+
+
+  async function handleSignInWithGoogle(){
+    const user = await AsyncStorage.getItem("@googleUser");
+    if(!user){
+      if(googleResponse?.type === "success"){
+        await getGoogleUserInfo(googleResponse.authentication?.accessToken)
+      }
+    }else{
+      setGoogleUserInfo(JSON.parse(user));
+    }
+  }
+
+  const getGoogleUserInfo = async(token:any)=>{
+    if(!token) return;
+    try{
+      const response = await fetch("https://www.googleapis.com/userinfo/v2/me",{
+        headers: {Authorization:`Bearer ${token}`}
+      });
+    
+      const user = await response.json();
+      await AsyncStorage.setItem("@googleUser",JSON.stringify(user));
+      setGoogleUserInfo(user);
+    }catch(error){
+      console.log("Error fetching Google user info:",error);
+    }
+  }
+
+  async function handleSignInWithMicrosoft(){
+    const user = await AsyncStorage.getItem("@microsoftUser");
+    if(!user){
+      if(microsoftResponse?.type === "success"){
+
+        await getMicrosoftUserInfo(microsoftResponse.authentication?.accessToken)
+      }
+    }else{
+      setMicrosoftUserInfo(JSON.parse(user));
+    }
+  }
+
+  const getMicrosoftUserInfo = async(token:any)=>{
+    if(!token) return;
+    try{
+      const response = await fetch("https://graph.microsoft.com/v1.0/me",{
+        headers:{Authorization:`Bearer ${token}`}
+      });
+      const user = await response.json();
+      await AsyncStorage.setItem("@microsoftUser",JSON.stringify(user));
+      setMicrosoftUserInfo(user);
+    }catch(error){
+      console.log("Error fetching Microsoft user info:",error);
+    } 
+  };
+
+  const clearGoogleStorage = ()=>{
+    AsyncStorage.removeItem("@googleUser");
+    setGoogleUserInfo(null);
+  }
+  
+  const clearMicrosoftStorage = ()=>{ 
+    AsyncStorage.removeItem("@microsoftUser");
+    setMicrosoftUserInfo(null);
+  }
+
+
+  return(
+    <View style={styles.container}>
+      <View>
+        <Text>Google</Text>
+        {googleUserInfo ? (
+          <>
+            <Text>{JSON.stringify(googleUserInfo,null,2)}</Text>
+            <Button 
+              color="red"
+              title="delete local storage" onPress={clearGoogleStorage} />
+          </>
+        ):(
+          <Button title="Sign in with GoogleDrive" onPress={()=>{googlePromptAsync()}} />
+        )}
+      </View>      
+      <View>
+        <Text>Microsoft</Text>
+        {microsoftUserInfo ? (
+          <>
+            <Text>{JSON.stringify(microsoftUserInfo,null,2)}</Text>
+            <Button 
+              color="red"
+              title="delete local storage" onPress={clearMicrosoftStorage} />
+          </>
+        ):(
+          <Button title="Sign in with OneDrive" onPress={()=>{microsoftPromptAsync()}} />
+        )}
+      </View>      
+    </View>
+    
+);
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
     alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+    justifyContent: 'center',
   },
 });
