@@ -20,7 +20,7 @@ export default function TabLayout() {
         },
       }}>
       <Tabs.Screen
-        name="Google"
+        name="index"
         options={{
           title: 'Google Drive',
           tabBarIcon: ({ color, focused }) => (
