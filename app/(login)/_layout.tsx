@@ -1,7 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 
-import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -14,7 +13,6 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
         tabBarStyle: {
           backgroundColor: Colors[colorScheme ?? 'light'].background,
         },
@@ -44,6 +42,17 @@ export default function TabLayout() {
             />),
         }}
       />
-    </Tabs>
+      <Tabs.Screen
+        name="GoTo"
+        options={{
+          title: 'Music',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={"musical-notes"} 
+              size={28} 
+              color={color}
+            />),
+        }}
+      />    </Tabs>
   );
 }
