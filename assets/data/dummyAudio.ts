@@ -11,7 +11,7 @@ export default[
     "title": "Pride and Prejudice",
     "author": "Jane Austen",
     "audio_url": "https://dn710707.ca.archive.org/0/items/girl_scout_collection_1008_blb_librivox/01-girl-scout-movement-in-the-public-schools_marsh_blb.mp3",  
-    "thumbnail_url": "https://archive.org/services/img/pride_prejudice_krs_librivox"  
+    "thumbnail_url": ""
   },
   {
     "id": 3,
