@@ -1,0 +1,50 @@
+import { Tabs } from 'expo-router';
+import React from 'react';
+
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Entypo from '@expo/vector-icons/Entypo';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+
+export default function TabLayout() {
+  const colorScheme = useColorScheme();
+
+  return (
+    <Tabs
+        screenOptions={{
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: Colors[colorScheme ?? 'light'].background,
+        },
+      }}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'MusicList',
+          tabBarIcon: () => (
+            <AntDesign name="cloud" size={24} color="white" />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="OfflineScreen"
+        options={{
+          title: 'Offline',
+          tabBarIcon: () => (
+            <MaterialIcons name="download-for-offline" size={24} color="white" />
+          ),
+        }}
+      />      <Tabs.Screen
+        name="LoginScreen"
+        options={{
+          title: 'Login',
+          tabBarIcon: () => (
+            <Entypo name="login" size={24} color="white" />
+          ),
+        }}
+      />
+       </Tabs>
+  );
+}
