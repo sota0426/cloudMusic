@@ -20,10 +20,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Google Drive',
+          title: 'Cloud',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons 
-              name={focused ? "logo-google" : "logo-google"} 
+              name="musical-notes" 
               size={28} 
               color={color}
             />
@@ -31,29 +31,19 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="Microsoft"
+        name="discover"
         options={{
-          title: 'OneDrive',
+          title: 'discover',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons 
-              name={focused ? "logo-microsoft" : "logo-microsoft"} 
+              name="search"
               size={28} 
               color={color}
-            />),
+            />
+          ),
         }}
       />
-      <Tabs.Screen
-        name="GoTo"
-        options={{
-          title: 'Music',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={"musical-notes"} 
-              size={28} 
-              color={color}
-            />),
-        }}
-      />   
-       </Tabs>
+
+    </Tabs>
   );
 }
