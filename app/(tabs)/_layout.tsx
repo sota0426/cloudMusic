@@ -1,17 +1,25 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 
+import { FloatingPlayer } from '@/components/audio/FloatingPlayer';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Entypo from '@expo/vector-icons/Entypo';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { BottomTabBar } from "@react-navigation/bottom-tabs";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
     <Tabs
+        tabBar={(props)=> 
+            <>
+              <FloatingPlayer />
+              <BottomTabBar {...props}/>
+            </>
+          }
         screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,

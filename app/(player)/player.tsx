@@ -1,22 +1,23 @@
 import { AudioData } from '@/assets/data/dummyAudio';
 import PlaybackBar from '@/components/audio/PlaybackBar';
+import { usePlayer } from '@/provider/PlayerProvider';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Entypo from '@expo/vector-icons/Entypo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Octicons from '@expo/vector-icons/Octicons';
 
-import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import { useAudioPlayerStatus } from "expo-audio";
 import { router } from 'expo-router';
 import { Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const audioData = AudioData[0];
-const audioSource = require('../../assets/data/audio.mp3');
 
 const PlayerScreen = () => {
 
+  const audioData = AudioData[0];
 
-  const player = useAudioPlayer({uri:audioSource});
+
+  const {player} = usePlayer();
   const playerStaus = useAudioPlayerStatus(player)
 
 

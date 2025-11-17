@@ -11,7 +11,7 @@ export const AudioData:AudioDataProps[] = [
     "id": 1,
     "title": "The Adventures of Sherlock Holmes",
     "author": "Sir Arthur Conan Doyle",
-    "audio_url": "assets\data\audio.mp3",
+    "audio_url": "@/assets/data/audio.mp3",
     "thumbnail_url": "https://archive.org/services/img/adventures_sherlockholmes_1007_librivox"
   },
   {
