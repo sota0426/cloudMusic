@@ -1,4 +1,4 @@
-interface AudioDataProps{
+export interface AudioDataProps{
   id:number;
   title:string;
   author:string;

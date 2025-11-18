@@ -46,11 +46,16 @@ const PlayerScreen = () => {
           
           <Ionicons name="play-skip-back-outline" size={24} color="white" />
           <Ionicons name="play-back-outline" size={24} color="white" />
-          {playerStaus.playing ? (
-            <AntDesign name="pause-circle" size={24} color="white" onPress={()=>{player.pause()}}/>
-          ):(
-            <Octicons name="play" size={24} color="white" onPress={()=>{player.play()}}/>
-          )}
+
+          <Pressable onPress={()=>
+            {playerStaus.playing ? player.pause() : player.play()}
+          }>
+            {playerStaus.playing ? (
+              <AntDesign name="pause-circle" size={24} color="white"/>
+            ):(
+              <Octicons name="play" size={24} color="white"/>
+            )} 
+          </Pressable>
           <Ionicons name="play-forward-outline" size={24} color="white" />
           <Ionicons name="play-skip-forward-outline" size={24} color="white" />
         </View>
