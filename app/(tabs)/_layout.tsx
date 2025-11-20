@@ -44,7 +44,17 @@ export default function TabLayout() {
             <MaterialIcons name="download-for-offline" size={24} color="white" />
           ),
         }}
-      />      <Tabs.Screen
+      /> 
+      <Tabs.Screen
+        name="test"
+        options={{
+          title: 'test',
+          tabBarIcon: () => (
+            <MaterialIcons name="download-for-offline" size={24} color="white" />
+          ),
+        }}
+      />                
+      <Tabs.Screen
         name="LoginScreen"
         options={{
           title: 'Login',

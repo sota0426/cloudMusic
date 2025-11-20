@@ -18,7 +18,15 @@ const PlayerScreen = () => {
 
 
   const {player} = usePlayer();
-  const playerStaus = useAudioPlayerStatus(player)
+  const playerStaus = useAudioPlayerStatus(player ?? undefined)
+
+  if(!player){
+    return(
+      <SafeAreaView className='flex-1 p-4 py-10'>
+        <Text className='text-white text-center mt-10'>プレーヤーを読み込み中...</Text>
+      </SafeAreaView>
+    )
+  }
 
 
   
