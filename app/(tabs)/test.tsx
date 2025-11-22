@@ -1,5 +1,6 @@
-import GoogleDriveFilesScreen from "@/components/files/GoogleDriveFilesScreen";
+import GoogleSignInScreen from "@/components/login/GoogleSignInScreen";
 import { useGoogleDrive } from "@/provider/useGoogleDrive";
+import { router } from "expo-router";
 import { View } from "react-native";
 
 export default function test(){
@@ -8,7 +9,9 @@ export default function test(){
 
     return (
         <View className="flex-1 bg-slate-500 items-center justify-center">
-            <GoogleDriveFilesScreen />
+            <GoogleSignInScreen 
+                onAuthSuccess={()=>{router.push("/GoogleDriveFilesScreen")}}
+            />
         </View>
     )
 };
