@@ -1,7 +1,7 @@
 import { View } from "react-native";
 // import GoogleSignInScreen from "../../components/login/SignIn_Google";
 import GoogleSignInScreen from "@/components/login/GoogleSignInScreen";
-import MicrosoftSignInScreen from "../../components/login/SignIn_Microsoft";
+import MicrosoftSignInScreen from "@/components/login/MicrosoftSignInScreen";
 
 export default function SignInScreen() {
   return(
@@ -9,7 +9,9 @@ export default function SignInScreen() {
         <GoogleSignInScreen 
           onAuthSuccess={()=>{}}
         />
-        <MicrosoftSignInScreen />
+        <MicrosoftSignInScreen
+          onAuthSuccess={()=>{}}
+        />
     </View>
   )
 }

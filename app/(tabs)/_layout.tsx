@@ -46,15 +46,23 @@ export default function TabLayout() {
         }}
       /> 
       <Tabs.Screen
-        name="GoogleDrive"
+        name="GoogleDriveScreen"
         options={{
           title: 'GoogleDrive',
           tabBarIcon: () => (
-            <MaterialIcons name="download-for-offline" size={24} color="white" />
+            <Entypo name="google-drive" size={24} color="white" />
           ),
         }}
       />                
       <Tabs.Screen
+        name="OneDriveScreen"
+        options={{
+          title: 'OneDrive',
+          tabBarIcon: () => (
+            <Entypo name="onedrive" size={24} color="white" />
+          ),
+        }}
+      />         <Tabs.Screen
         name="LoginScreen"
         options={{
           title: 'Login',

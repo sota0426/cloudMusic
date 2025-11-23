@@ -85,7 +85,8 @@ export default function GoogleDriveFilesScreen(){
         data={files}
         keyExtractor={(item) => item.id}
         renderItem={({ item })=> (
-          <DriveListItem 
+          <DriveListItem
+            driveType="GoogleDrive" 
             file={item} 
             onPressItem={handleItemPress}
           />
