@@ -46,9 +46,9 @@ export default function TabLayout() {
         }}
       /> 
       <Tabs.Screen
-        name="test"
+        name="GoogleDrive"
         options={{
-          title: 'test',
+          title: 'GoogleDrive',
           tabBarIcon: () => (
             <MaterialIcons name="download-for-offline" size={24} color="white" />
           ),

@@ -5,11 +5,15 @@ import { useEffect, useState } from "react";
 
 WebBrowser.maybeCompleteAuthSession();
 
-interface GoogleDriveFile {
+// 💡 修正後の GoogleDriveFile インターフェース
+export interface GoogleDriveFile {
   id: string;
   name: string;
   mimeType: string;
-  modifiedTime: string;
+  modifiedTime?: string;
+  parents?: string[];
+  thumbnailLink?: string;
+  webContentLink?: string;
 }
 
 interface GoogleUserInfo {
@@ -106,19 +110,19 @@ export const useGoogleDrive = () => {
     }
   };
 
-  const fetchGoogleDriveFiles = async () => {
+  const fetchGoogleDriveFiles = async (parentFolderId: string = 'root') => { // 💡 parentFolderId を引数に追加
     if (!accessToken) return;
 
     setLoading(true);
     try {
-      // フォルダと音楽ファイルのみを取得
-      // 音楽ファイルのMIMEタイプ: audio/mpeg, audio/mp3, audio/wav, audio/flac, etc.
+      // 💡 クエリ修正: 現在のフォルダの子要素に限定
       const query = encodeURIComponent(
-        "mimeType='application/vnd.google-apps.folder' or mimeType contains 'audio/'"
+        `(mimeType='application/vnd.google-apps.folder' or mimeType contains 'audio/') and '${parentFolderId}' in parents and trashed=false`
       );
       
+      // 💡 fields 修正: parents, thumbnailLink, webContentLink を追加
       const response = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q=${query}&pageSize=100&fields=files(id,name,mimeType,modifiedTime)&orderBy=modifiedTime desc`,
+        `https://www.googleapis.com/drive/v3/files?q=${query}&pageSize=100&fields=files(id,name,mimeType,modifiedTime,parents,thumbnailLink,webContentLink)&orderBy=folder,name`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
