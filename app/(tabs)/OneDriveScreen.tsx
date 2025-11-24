@@ -102,6 +102,7 @@ export default function OneDriveFilesScreen(){
             driveType="OneDrive" 
             file={item as any} // 型アサーション (必要に応じてDriveListItemの型を汎用化)
             onPressItem={handleItemPress}
+            indentationLevel={0}
           />
         )}
         ListEmptyComponent={() => (

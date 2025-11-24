@@ -2,6 +2,7 @@
 
 import DriveListItem from "@/components/audio/DriveListItem";
 import { GoogleDriveFile, useGoogleDrive } from "@/provider/useGoogleDrive";
+import Entypo from "@expo/vector-icons/Entypo";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 
@@ -33,7 +34,9 @@ export default function GoogleDriveFilesScreen(){
   if (!isAuthenticated) {
     return (
       <View className="flex-1 justify-center items-center bg-black">
-        <Text className="text-white text-xl mb-4">Google Drive にサインインしてください</Text>
+        <Text className="text-white text-xl mb-4">
+            <Entypo name="google-drive" size={24} color="white" /> OneDrive にサインインしてください
+        </Text>
         <Pressable onPress={signIn} className="p-3 bg-blue-600 rounded">
           <Text className="text-white text-lg">Google サインイン</Text>
         </Pressable>
@@ -89,6 +92,7 @@ export default function GoogleDriveFilesScreen(){
             driveType="GoogleDrive" 
             file={item} 
             onPressItem={handleItemPress}
+            indentationLevel={0}
           />
         )}
         ListEmptyComponent={() => (
