@@ -7,7 +7,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
 import Octicons from "@expo/vector-icons/Octicons";
 import { useAudioPlayerStatus } from "expo-audio";
-import { Pressable } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 // 💡 ファイルの型を汎用化: GoogleDriveFile または OneDriveFile を受け入れられるように
 export type GenericDriveFile = GoogleDriveFile & Partial<OneDriveFile>; 
@@ -43,17 +43,11 @@ export default function DriveListItem({
  if (!isFolder && !isAudio) {
   return null; 
  }
-
- const indentationStyle={
-    paddingLeft: `${indentationLevel * 15 + 12}px`,
- }
  
 
    const {player}  = usePlayer();
    const playerStatus = useAudioPlayerStatus(player ?? undefined);
- 
-   const isReady = !!player;
- 
+  
    const onTogglePlay = async () => {
      console.log("togglePlay pressed", { playerPresent: !!player, status: playerStatus?.playing });
      if (!player) { console.warn("no player"); return; }
@@ -72,14 +66,13 @@ export default function DriveListItem({
 
  return(
   // Linkの代わりにdivを使用し、見た目をLinkのようにします
-  <div 
+  <View 
    // フォルダの場合でもクリック処理を有効にするため、Linkの代わりにButton/divでラップ
    className={`
     flex flex-row gap-4 items-center p-3 border-b border-gray-700 w-full cursor-pointer transition duration-150
     hover:bg-gray-700/50
     ${isFolder ? 'cursor-pointer' : 'cursor-pointer'}
    `}
-   style={indentationStyle}
   >
    <button
     // UIとしてボタン化
@@ -96,12 +89,12 @@ export default function DriveListItem({
      <AntDesign name="minus-circle" color="white" size={24}/>
     )}
 
-    <div className="flex-1">
-     <p className="text-white font-medium text-sm">
+    <View className="flex-1">
+     <Text className="text-white font-medium text-sm">
       {name}
-     </p>
+     </Text>
      {/* 💡 ドライブタイプの表示 */}
-     <div className="flex flex-row items-center gap-1 mt-0.5">
+     <View className="flex flex-row items-center gap-1 mt-0.5">
       {driveType === "GoogleDrive" ? (
        // Googleアイコン (Lucide Reactには直接的なGoogleロゴがないため、Gアイコンを代用またはカスタムSVGを使用)
         <Entypo name="google-drive" size={12} color="blue"/> 
@@ -109,11 +102,12 @@ export default function DriveListItem({
        // OneDriveアイコン (Lucide Cloudを代用)
         <Entypo name="cloud" size={12} color="blue"/> 
       )}
-      <span className="text-gray-400 text-xs">
+      <Text className="text-gray-400 text-xs">
        {driveType === "GoogleDrive" ? "Google Drive" : "OneDrive"}
-      </span>
-     </div>
-    </div>
+      </Text>
+      <Entypo name="download" size={12} color="blue"/> 
+     </View>
+    </View>
 
     {/* 音楽ファイルの場合にのみ再生アイコンを表示 */}
     {!isFolder && isAudio &&    
@@ -127,7 +121,7 @@ export default function DriveListItem({
      <AntDesign name="down-circle" size={24} color="white" />
     }
    </button>
-  </div>
+  </View>
  );
 }
 

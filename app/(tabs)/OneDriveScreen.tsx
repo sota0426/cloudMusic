@@ -48,6 +48,35 @@ export default function OneDriveFilesScreen() {
     return AUDIO_EXTENSIONS.some(ext => lowerName.endsWith(ext));
   };
 
+  const PlayScreen =(currentAudio:any)=>{
+    if(!currentAudio) return;
+    return(
+        <View className="bg-gray-900 p-4 mb-3 rounded-lg">
+          <Text className="text-white text-sm mb-">再生中</Text>
+          <Text className="text-white text-base font-semibold mb-3" numberOfLines={1}>
+            {currentAudio.name}
+          </Text>
+          <View className="flex-row space-x-2">
+            <Pressable 
+              onPress={() => isPlaying ? pauseAudio() : resumeAudio()}
+              className="bg-blue-600 p-3 rounded flex-1 mr-2"
+              disabled={playerLoading}
+            >
+              <Text className="text-white text-center font-semibold">
+                {playerLoading ? "読込中..." : isPlaying ? "⏸ 一時停止" : "▶ 再生"}
+              </Text>
+            </Pressable>
+            <Pressable 
+              onPress={stopAudio}
+              className="bg-red-600 p-3 rounded flex-1"
+            >
+              <Text className="text-white text-center font-semibold">■ 停止</Text>
+            </Pressable>
+          </View>
+        </View>
+    )
+  }
+
   // 音声ファイルの再生処理
   const handlePlayAudio = async (item: OneDriveFile) => {
     try {
@@ -65,8 +94,6 @@ export default function OneDriveFilesScreen() {
       
       console.log("📥 取得したダウンロードURL:");
       console.log(downloadUrl);
-      console.log("URL長:", downloadUrl?.length);
-      console.log("URLの最初の100文字:", downloadUrl?.substring(0, 100));
       
       if (!downloadUrl) {
         console.error("❌ ダウンロードURLがnull");
@@ -164,6 +191,7 @@ export default function OneDriveFilesScreen() {
     );
   }
 
+
   return (
     <View className="flex-1 bg-black p-4">
       {/* ヘッダー */}
@@ -182,32 +210,9 @@ export default function OneDriveFilesScreen() {
         </Pressable>
       )}
 
-      {/* 再生コントロール */}
-      {currentAudio && (
-        <View className="bg-gray-900 p-4 mb-3 rounded-lg">
-          <Text className="text-white text-sm mb-1 text-gray-400">再生中</Text>
-          <Text className="text-white text-base font-semibold mb-3" numberOfLines={1}>
-            {currentAudio.name}
-          </Text>
-          <View className="flex-row space-x-2">
-            <Pressable 
-              onPress={() => isPlaying ? pauseAudio() : resumeAudio()}
-              className="bg-blue-600 p-3 rounded flex-1 mr-2"
-              disabled={playerLoading}
-            >
-              <Text className="text-white text-center font-semibold">
-                {playerLoading ? "読込中..." : isPlaying ? "⏸ 一時停止" : "▶ 再生"}
-              </Text>
-            </Pressable>
-            <Pressable 
-              onPress={stopAudio}
-              className="bg-red-600 p-3 rounded flex-1"
-            >
-              <Text className="text-white text-center font-semibold">■ 停止</Text>
-            </Pressable>
-          </View>
-        </View>
-      )}
+      <PlayScreen currentAudio={currentAudio} />
+
+   
 
       {/* ファイルリスト */}
       <FlatList 
@@ -226,17 +231,20 @@ export default function OneDriveFilesScreen() {
                 onPressItem={handleItemPress}
                 indentationLevel={0}
               />
+
               {isCurrentlyPlaying && (
                 <View className="flex-row items-center ml-4 mb-2">
                   <View className="w-2 h-2 bg-green-400 rounded-full mr-2" />
                   <Text className="text-green-400 text-xs">再生中</Text>
                 </View>
               )}
+              
               {isCurrentAudio && !isPlaying && !isDownloading && (
                 <View className="flex-row items-center ml-4 mb-2">
                   <Text className="text-yellow-400 text-xs">一時停止中</Text>
                 </View>
               )}
+              
               {isDownloading && (
                 <View className="flex-row items-center ml-4 mb-2">
                   <ActivityIndicator size="small" color="#3b82f6" />

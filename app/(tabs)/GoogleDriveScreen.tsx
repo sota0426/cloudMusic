@@ -63,13 +63,10 @@ export default function GoogleDriveFilesScreen() {
       
       setDownloadingFileId(item.id);
       
-      console.log("🔄 getDownloadUrl() 実行中...");
       const downloadUrl = await getDownloadUrl(item.id);
       
       console.log("📥 取得したダウンロードURL:");
       console.log(downloadUrl);
-      console.log("URL長:", downloadUrl?.length);
-      console.log("URLの最初の100文字:", downloadUrl?.substring(0, 100));
       
       if (!downloadUrl) {
         console.error("❌ ダウンロードURLがnull");
@@ -188,7 +185,7 @@ export default function GoogleDriveFilesScreen() {
       {/* 再生コントロール */}
       {currentAudio && currentAudio.source === "googledrive" && (
         <View className="bg-gray-900 p-4 mb-3 rounded-lg">
-          <Text className="text-white text-sm mb-1 text-gray-400">再生中</Text>
+          <Text className="text-sm mb-1 text-gray-400">再生中</Text>
           <Text className="text-white text-base font-semibold mb-3" numberOfLines={1}>
             {currentAudio.name}
           </Text>

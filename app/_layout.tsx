@@ -13,7 +13,7 @@ export default function RootLayout() {
       <PlayerProvider>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(player)" options={{ headerShown: false }} />
+          {/* <Stack.Screen name="(player)" options={{ headerShown: false }} /> */}
         </Stack>
       </PlayerProvider>
     </ThemeProvider>

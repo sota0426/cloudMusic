@@ -1,6 +1,6 @@
 // PlayerProvider.tsx
 import { AudioPlayer, useAudioPlayer } from "expo-audio";
-import { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
+import { createContext, PropsWithChildren, useContext, useState } from "react";
 
 // 音声データの型定義
 export interface AudioMetadata {
@@ -33,17 +33,6 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
   // 初期状態では空のプレイヤーを作成
   const player = useAudioPlayer();
 
-  // 🔍 デバッグ: プレイヤーの状態を監視
-  useEffect(() => {
-    console.log("🎵 Player状態変更:", {
-      playing: player.playing,
-      volume: player.volume,
-      duration: player.duration,
-      currentTime: player.currentTime,
-      isLoaded: player.isLoaded,
-    });
-  }, [player.playing, player.isLoaded]);
-
   /**
    * 音声を再生
    */
@@ -64,28 +53,13 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
         console.log("⏸️ 既存の再生を停止");
         player.pause();
       }
-
-      console.log("🔄 player.replace() 実行中...");
       
       // 新しい音声をロードして再生
       await player.replace({ uri: audio.url });
       
-      console.log("✅ player.replace() 完了");
-      console.log("🔍 replace後のプレイヤー状態:", {
-        playing: player.playing,
-        isLoaded: player.isLoaded,
-        duration: player.duration,
-      });
-
-      console.log("▶️ player.play() 実行中...");
       player.play();
+      console.log("▶️ player.play()　実行");
       
-      console.log("✅ player.play() 完了");
-      console.log("🔍 play後のプレイヤー状態:", {
-        playing: player.playing,
-        volume: player.volume,
-      });
-
       setCurrentAudio(audio);
       console.log("✅ playAudio() 完了");
       
