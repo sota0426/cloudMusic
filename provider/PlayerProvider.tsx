@@ -7,7 +7,7 @@ export interface AudioMetadata {
   id: string;
   name: string;
   url: string; // ダウンロード可能なURL
-  source: "local" | "onedrive" | "googledrive"; // 音声のソース
+  source: "local" | "onedrive" | "googledrive"; 
   mimeType?: string;
   duration?: number;
 }
@@ -52,7 +52,6 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       console.log("🎵 playAudio() 開始");
       console.log("📁 ファイル名:", audio.name);
-      console.log("🆔 ファイルID:", audio.id);
       console.log("🌐 URL:", audio.url);
       console.log("📦 ソース:", audio.source);
       console.log("📄 MIME Type:", audio.mimeType);

@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 
-import { FloatingPlayer } from '@/components/audio/FloatingPlayer';
+// import { FloatingPlayer } from '@/components/audio/FloatingPlayer';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -16,7 +16,7 @@ export default function TabLayout() {
     <Tabs
         tabBar={(props)=> 
             <>
-              <FloatingPlayer />
+              {/* <FloatingPlayer /> */}
               <BottomTabBar {...props}/>
             </>
           }

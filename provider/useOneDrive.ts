@@ -217,7 +217,6 @@ export const useOneDrive = () => {
   const getDownloadUrl = async (fileId: string): Promise<string | null> => {
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("🔑 getDownloadUrl() 開始");
-    console.log("🆔 ファイルID:", fileId);
     console.log("🔐 アクセストークン存在:", !!accessToken);
     console.log("🔐 トークンの最初の20文字:", accessToken?.substring(0, 20));
     
