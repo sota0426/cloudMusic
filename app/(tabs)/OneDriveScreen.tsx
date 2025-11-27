@@ -1,44 +1,161 @@
 // OneDriveFilesScreen.tsx
 
-import DriveListItem from "@/components/audio/DriveListItem"; // 既存のコンポーネントを流用
-import { OneDriveFile, useOneDrive } from "@/provider/useOneDrive"; // 💡 useOneDriveをインポート
+import DriveListItem from "@/components/audio/DriveListItem";
+import { usePlayer } from "@/provider/PlayerProvider";
+import { OneDriveFile, useOneDrive } from "@/provider/useOneDrive";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Pressable, Text, View } from "react-native";
 
-// OneDriveのルートアイテムIDは通常 "root" を使用
 const ROOT_ID = "root";
 
-export default function OneDriveFilesScreen(){
+// 音声ファイルの拡張子リスト
+const AUDIO_EXTENSIONS = ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'];
+
+export default function OneDriveFilesScreen() {
   const { 
     files, 
     loading, 
     isAuthenticated, 
     signIn, 
-    signOut, // ログアウト機能の確認のため追加
-    fetchOneDriveFiles 
+    fetchOneDriveFiles,
+    getDownloadUrl
   } = useOneDrive();
-  
-  // 現在のフォルダIDを管理するステート
-  const [currentFolderId, setCurrentFolderId] = useState(ROOT_ID);
-  
-  // フォルダの履歴を管理し、[...prev, current] の形式で格納
-  const [folderHistory, setFolderHistory] = useState<string[]>([]); 
 
-  // 認証状態と currentFolderId が変わるたびにファイルを取得
+  const { 
+    playAudio, 
+    pauseAudio, 
+    resumeAudio, 
+    stopAudio, 
+    currentAudio, 
+    isPlaying,
+    isLoading: playerLoading
+  } = usePlayer();
+  
+  const [currentFolderId, setCurrentFolderId] = useState(ROOT_ID);
+  const [folderHistory, setFolderHistory] = useState<string[]>([]); 
+  const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
+
   useEffect(() => {
     if (isAuthenticated) {
-      // 💡 OneDriveのファイル取得関数を呼び出す
       fetchOneDriveFiles(currentFolderId);
     }
   }, [isAuthenticated, currentFolderId]);
+
+  // 音声ファイルかどうかを判定
+  const isAudioFile = (fileName: string): boolean => {
+    const lowerName = fileName.toLowerCase();
+    return AUDIO_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+  };
+
+  // 音声ファイルの再生処理
+  const handlePlayAudio = async (item: OneDriveFile) => {
+    try {
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("🎯 handlePlayAudio() 開始");
+      console.log("📁 選択ファイル:", item.name);
+      console.log("🆔 ファイルID:", item.id);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      
+      setDownloadingFileId(item.id);
+      
+      // ダウンロード可能なURLを取得
+      console.log("🔄 getDownloadUrl() 実行中...");
+      const downloadUrl = await getDownloadUrl(item.id);
+      
+      console.log("📥 取得したダウンロードURL:");
+      console.log(downloadUrl);
+      console.log("URL長:", downloadUrl?.length);
+      console.log("URLの最初の100文字:", downloadUrl?.substring(0, 100));
+      
+      if (!downloadUrl) {
+        console.error("❌ ダウンロードURLがnull");
+        Alert.alert("エラー", "ファイルのダウンロードURLを取得できませんでした");
+        return;
+      }
+
+      // URLの妥当性チェック
+      if (!downloadUrl.startsWith("http")) {
+        console.error("❌ 不正なURL形式:", downloadUrl);
+        Alert.alert("エラー", "無効なURLです");
+        return;
+      }
+
+      console.log("✅ URL取得成功");
+      console.log("🎵 playAudio() を呼び出します");
+
+      // PlayerProviderを使用して再生
+      await playAudio({
+        id: item.id,
+        name: item.name,
+        url: downloadUrl,
+        source: "onedrive",
+        mimeType: item.file?.mimeType,
+      });
+      
+      console.log("✅ handlePlayAudio() 完了");
+      
+    } catch (error) {
+      console.error("❌ 再生エラー:", error);
+      console.error("❌ エラーの型:", typeof error);
+      console.error("❌ エラー内容:", JSON.stringify(error, null, 2));
+      Alert.alert("再生エラー", `音声ファイルの再生に失敗しました: ${error}`);
+    } finally {
+      setDownloadingFileId(null);
+    }
+  };
+
+ // アイテムタップのハンドラ
+ const handleItemPress = (item: OneDriveFile) => {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("👆 handleItemPress() 呼び出された!");
+  console.log("📁 アイテム名:", item.name);
+  console.log("🆔 アイテムID:", item.id);
+  console.log("📂 フォルダ?:", !!item.folder);
+  console.log("🎵 オーディオ?:", isAudioFile(item.name));
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   
-  // 認証されていない場合はサインインボタンを表示
+  const isFolder = !!item.folder;
+
+  if (isFolder) {
+    console.log("📂 フォルダなので移動します");
+    setFolderHistory(prev => [...prev, currentFolderId]);
+    setCurrentFolderId(item.id);
+  } else if (isAudioFile(item.name)) {
+    console.log("🎵 音声ファイルです");
+    // 既に再生中のファイルをタップした場合は一時停止/再開
+    if (currentAudio?.id === item.id) {
+      console.log("🔄 同じファイル - 一時停止/再開");
+      if (isPlaying) {
+        pauseAudio();
+      } else {
+        resumeAudio();
+      }
+    } else {
+      console.log("▶️ 新しいファイル - 再生開始");
+      handlePlayAudio(item);
+    }
+  } else {
+    console.log("❌ 非対応ファイル");
+    Alert.alert("非対応", "このファイル形式は再生できません");
+  }
+};
+  // 戻るボタンのハンドラ
+  const goBack = () => {
+    if (folderHistory.length > 0) {
+      const previousFolderId = folderHistory[folderHistory.length - 1];
+      setFolderHistory(prev => prev.slice(0, -1)); 
+      setCurrentFolderId(previousFolderId);
+    }
+  };
+
+  // サインイン画面
   if (!isAuthenticated) {
     return (
       <View className="flex-1 justify-center items-center bg-black">
-        <Text className="text-white text-xl mb-4">
-            <Entypo name="cloud" size={24} color="white" /> OneDrive にサインインしてください
+        <Entypo name="cloud" size={48} color="white" />
+        <Text className="text-white text-xl mb-4 mt-4">
+          OneDrive にサインインしてください
         </Text>
         <Pressable onPress={signIn} className="p-3 bg-blue-600 rounded">
           <Text className="text-white text-lg">Microsoft サインイン</Text>
@@ -47,68 +164,94 @@ export default function OneDriveFilesScreen(){
     );
   }
 
-  // アイテムがタップされたときのハンドラ
-  const handleItemPress = (item: OneDriveFile) => {
-    // 💡 OneDriveのデータ構造に基づくフォルダ判定
-    const isFolder = !!item.folder; 
-
-    if (isFolder) {
-      // フォルダの場合、履歴に追加し、現在のフォルダIDを更新
-      setFolderHistory(prev => [...prev, currentFolderId]);
-      setCurrentFolderId(item.id);
-    } else {
-      // 音楽ファイルの場合、再生処理
-      console.log(`再生リクエスト: ${item.name}`);
-      // ここで expo-router の Link または push を使用して遷移
-    }
-  };
-  
-  // 戻るボタンのハンドラ
-  const goBack = () => {
-      if (folderHistory.length > 0) {
-        // 履歴の最後の要素（一つ前のフォルダID）を取得
-        const previousFolderId = folderHistory[folderHistory.length - 1];
-        // 履歴から最後の要素を削除
-        setFolderHistory(prev => prev.slice(0, -1)); 
-        // フォルダIDを戻す
-        setCurrentFolderId(previousFolderId);
-      }
-  };
-
-  return(
+  return (
     <View className="flex-1 bg-black p-4">
-      <Text className="text-white text-2xl mb-4 flex-row items-center">
+      {/* ヘッダー */}
+      <View className="flex-row items-center mb-4">
         <Entypo name="cloud" size={24} color="#0078d4" />
-        <Text className="text-white ml-2">
+        <Text className="text-white text-2xl ml-2">
           {loading ? "ロード中..." : "OneDrive Files"}
         </Text>
         {loading && <ActivityIndicator size="small" color="white" className="ml-2" />}
-      </Text>
+      </View>
       
-      {/* 戻るボタンの表示 */}
+      {/* 戻るボタン */}
       {currentFolderId !== ROOT_ID && (
-          <Pressable onPress={goBack} className="p-2 mb-2 bg-gray-800 rounded flex-row items-center">
-              <Text className="text-white ml-2">← 戻る</Text>
-          </Pressable>
+        <Pressable onPress={goBack} className="p-3 mb-2 bg-gray-800 rounded flex-row items-center">
+          <Text className="text-white text-base">← 戻る</Text>
+        </Pressable>
       )}
 
-      
+      {/* 再生コントロール */}
+      {currentAudio && (
+        <View className="bg-gray-900 p-4 mb-3 rounded-lg">
+          <Text className="text-white text-sm mb-1 text-gray-400">再生中</Text>
+          <Text className="text-white text-base font-semibold mb-3" numberOfLines={1}>
+            {currentAudio.name}
+          </Text>
+          <View className="flex-row space-x-2">
+            <Pressable 
+              onPress={() => isPlaying ? pauseAudio() : resumeAudio()}
+              className="bg-blue-600 p-3 rounded flex-1 mr-2"
+              disabled={playerLoading}
+            >
+              <Text className="text-white text-center font-semibold">
+                {playerLoading ? "読込中..." : isPlaying ? "⏸ 一時停止" : "▶ 再生"}
+              </Text>
+            </Pressable>
+            <Pressable 
+              onPress={stopAudio}
+              className="bg-red-600 p-3 rounded flex-1"
+            >
+              <Text className="text-white text-center font-semibold">■ 停止</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      {/* ファイルリスト */}
       <FlatList 
         data={files}
         keyExtractor={(item) => item.id}
-        renderItem={({ item })=> (
-          // DriveListItemがOneDriveFileと互換性があることを前提とします
-          <DriveListItem
-            driveType="OneDrive" 
-            file={item as any} // 型アサーション (必要に応じてDriveListItemの型を汎用化)
-            onPressItem={handleItemPress}
-            indentationLevel={0}
-          />
-        )}
+        renderItem={({ item }) => {
+          const isCurrentlyPlaying = currentAudio?.id === item.id && isPlaying;
+          const isCurrentAudio = currentAudio?.id === item.id;
+          const isDownloading = downloadingFileId === item.id;
+          
+          return (
+            <View className={isCurrentAudio ? "bg-gray-900 rounded-lg mb-1" : "mb-1"}>
+              <DriveListItem
+                driveType="OneDrive" 
+                file={item as any}
+                onPressItem={handleItemPress}
+                indentationLevel={0}
+              />
+              {isCurrentlyPlaying && (
+                <View className="flex-row items-center ml-4 mb-2">
+                  <View className="w-2 h-2 bg-green-400 rounded-full mr-2" />
+                  <Text className="text-green-400 text-xs">再生中</Text>
+                </View>
+              )}
+              {isCurrentAudio && !isPlaying && !isDownloading && (
+                <View className="flex-row items-center ml-4 mb-2">
+                  <Text className="text-yellow-400 text-xs">一時停止中</Text>
+                </View>
+              )}
+              {isDownloading && (
+                <View className="flex-row items-center ml-4 mb-2">
+                  <ActivityIndicator size="small" color="#3b82f6" />
+                  <Text className="text-blue-400 text-xs ml-2">ダウンロード中...</Text>
+                </View>
+              )}
+            </View>
+          );
+        }}
         ListEmptyComponent={() => (
-            <Text className="text-gray-400 text-center mt-10">ファイルまたはフォルダがありません</Text>
+          <Text className="text-gray-400 text-center mt-10">
+            ファイルまたはフォルダがありません
+          </Text>
         )}
       />
     </View>
-  )
+  );
 }

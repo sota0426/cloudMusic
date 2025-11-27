@@ -1,8 +1,7 @@
-// OneDrive File (DriveItem) のインターフェース
+// useOneDrive.ts
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as AuthSession from "expo-auth-session";
 import { useEffect, useState } from "react";
-
 
 // --- 型定義 ---
 export interface OneDriveFile {
@@ -15,7 +14,7 @@ export interface OneDriveFile {
   lastModifiedDateTime?: string;
   parentReference?: {
     driveId: string;
-    id: string; // 親フォルダのID
+    id: string;
     path: string;
   };
   webUrl?: string;
@@ -37,8 +36,6 @@ interface StoredAuth {
 // --- 定数 ---
 const MICROSOFT_AUTH_STORAGE_KEY = "@microsoftAuth";
 
-// Microsoft Entra ID (旧 Azure AD) の設定
-// ⚠️ 実際のアプリケーションでは、これらのIDをセキュアな方法で管理してください
 const CLIENT_ID = "0f7f6cf5-7f64-4ed5-bbff-3f0cb8796763";
 const TENANT_ID = "9c88b83f-6b00-42a9-a985-8091fbea96f3";
 
@@ -65,7 +62,7 @@ export const useOneDrive = () => {
         "openid",
         "profile",
         "User.Read",
-        "Files.Read", // OneDriveアクセスに必要
+        "Files.Read",
         "offline_access",
       ],
       responseType: AuthSession.ResponseType.Code,
@@ -74,25 +71,19 @@ export const useOneDrive = () => {
     DISCOVERY
   );
 
-  // 1. 起動時に保存された認証情報をロード
   useEffect(() => {
     loadStoredAuth();
   }, []);
 
-  // 2. AuthSessionレスポンスを処理 (Code Exchange)
   useEffect(() => {
     if (response?.type === "success") {
       const { code } = response.params;
-
       if (code && request) {
         exchangeCodeForToken(code, request.codeVerifier);
       }
     }
   }, [response, request]);
 
-  /**
-   * CodeをAccess Tokenに交換
-   */
   const exchangeCodeForToken = async (code: string, codeVerifier?: string) => {
     if (!codeVerifier) return;
 
@@ -119,27 +110,20 @@ export const useOneDrive = () => {
     }
   };
 
-  /**
-   * 保存された認証情報をロード
-   */
   const loadStoredAuth = async () => {
     const storedData = await AsyncStorage.getItem(MICROSOFT_AUTH_STORAGE_KEY);
     if (!storedData) return;
 
     const authData: StoredAuth = JSON.parse(storedData);
 
-    // 有効期限をチェック
     if (authData.expiresAt > Date.now()) {
       setMicrosoftUserInfo(authData.user);
       setAccessToken(authData.accessToken);
     } else {
-      await clearMicrosoftStorage(); // 期限切れの場合はクリア
+      await clearMicrosoftStorage();
     }
   };
 
-  /**
-   * 認証成功時の処理
-   */
   const handleAuthSuccess = async (token: string, expiresIn?: number) => {
     if (!token) return;
 
@@ -150,7 +134,6 @@ export const useOneDrive = () => {
       if (user) {
         const expiresAt = Date.now() + (expiresIn || 3600) * 1000;
 
-        // 認証情報を保存
         await AsyncStorage.setItem(
           MICROSOFT_AUTH_STORAGE_KEY,
           JSON.stringify({ user, accessToken: token, expiresAt })
@@ -164,9 +147,6 @@ export const useOneDrive = () => {
     }
   };
 
-  /**
-   * Microsoft Graphからユーザー情報を取得
-   */
   const getMicrosoftUserInfo = async (token: string) => {
     try {
       const response = await fetch("https://graph.microsoft.com/v1.0/me", {
@@ -189,49 +169,33 @@ export const useOneDrive = () => {
     }
   };
 
-  /**
-   * OneDriveのファイルまたはフォルダ一覧を取得
-   * @param parentItemId 親フォルダのID。デフォルトは 'root'。
-   */
   const fetchOneDriveFiles = async (parentItemId: string = "root") => {
     if (!accessToken) return;
 
     setLoading(true);
     try {
-      // 💡 OneDriveのアイテム一覧取得エンドポイント
-      // parentItemId が 'root' の場合は /me/drive/root/children
-      // それ以外の場合は /me/drive/items/{parentItemId}/children
       const endpoint =
         parentItemId === "root"
           ? "https://graph.microsoft.com/v1.0/me/drive/root/children"
           : `https://graph.microsoft.com/v1.0/me/drive/items/${parentItemId}/children`;
 
-      // 💡 select句で必要なフィールドのみを取得 (Google Driveのfieldsに相当)
-      // フォルダとオーディオファイルのみをフィルタリングするクエリパラメータは標準で存在しないため、
-      // 取得後にクライアント側でフィルタリングするか、サーバー側フィルタリングの制限を受け入れる必要があります。
-      // 今回はシンプルに全ファイル・フォルダを取得し、Google Driveのロジックに合わせるため、
-      // 'file'と'folder'プロパティをチェックしてフォルダとオーディオファイルに近いものを抽出します。
       const selectFields = [
         "id",
         "name",
-        "file", // mimeTypeはこの中に含まれる
-        "folder", // フォルダかどうか
+        "file",
+        "folder",
         "lastModifiedDateTime",
         "parentReference",
         "webUrl",
       ].join(",");
 
-      const response = await fetch(
-        `${endpoint}?$select=${selectFields}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      const response = await fetch(`${endpoint}?$select=${selectFields}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
 
       const data = await response.json();
       const items: OneDriveFile[] = data.value || [];
 
-      // Google Driveの例に倣い、フォルダとオーディオファイル（っぽいもの）のみをフィルタリング
       const filteredItems = items.filter((item) => {
         const isFolder = !!item.folder;
         const isAudio = item.file?.mimeType?.startsWith("audio/");
@@ -248,8 +212,63 @@ export const useOneDrive = () => {
   };
 
   /**
-   * ストレージとステートから認証情報をクリア（ログアウト）
+   * 💡 新規追加: ダウンロード可能なURLを取得
    */
+  const getDownloadUrl = async (fileId: string): Promise<string | null> => {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🔑 getDownloadUrl() 開始");
+    console.log("🆔 ファイルID:", fileId);
+    console.log("🔐 アクセストークン存在:", !!accessToken);
+    console.log("🔐 トークンの最初の20文字:", accessToken?.substring(0, 20));
+    
+    if (!accessToken) {
+      console.error("❌ Access token is not available");
+      return null;
+    }
+
+    try {
+      const url = `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}?select=@microsoft.graph.downloadUrl`;
+      console.log("🌐 リクエストURL:", url);
+      
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("📡 レスポンスステータス:", response.status);
+      console.log("📡 レスポンスOK:", response.ok);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Download URL fetch failed:", response.status);
+        console.error("❌ エラーレスポンス:", errorText);
+        return null;
+      }
+
+      const data = await response.json();
+      console.log("📦 レスポンスデータ:", JSON.stringify(data, null, 2));
+      
+      const downloadUrl = data["@microsoft.graph.downloadUrl"];
+      console.log("🔗 ダウンロードURL:", downloadUrl);
+      console.log("✅ getDownloadUrl() 完了");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      
+      return downloadUrl || null;
+    } catch (error) {
+      console.error("❌ Download URL fetch error:", error);
+      console.error("❌ エラー詳細:", JSON.stringify(error, null, 2));
+      return null;
+    }
+  };
+
+  /**
+   * 💡 新規追加: アクセストークンを外部から取得可能に
+   */
+  const getAccessToken = (): string | null => {
+    return accessToken;
+  };
+
   const clearMicrosoftStorage = async () => {
     await AsyncStorage.removeItem(MICROSOFT_AUTH_STORAGE_KEY);
     setMicrosoftUserInfo(null);
@@ -275,6 +294,8 @@ export const useOneDrive = () => {
     signIn,
     signOut,
     fetchOneDriveFiles,
+    getDownloadUrl, // 💡 追加
+    getAccessToken, // 💡 追加
     isAuthenticated: !!microsoftUserInfo,
   };
 };
