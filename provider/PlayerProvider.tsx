@@ -102,15 +102,18 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
    * 一時停止
    */
   const pauseAudio = () => {
-    console.log("⏸️ pauseAudio() 実行");
-    console.log("現在の状態 - playing:", player.playing);
-    
+    console.log("▶️ pauseAudio() 実行");
     if (player.playing) {
       player.pause();
       console.log("✅ 一時停止完了");
     } else {
       console.log("⚠️ 既に停止中");
     }
+    console.log("現在の状態:", {
+      playing: player.playing,
+      currentAudio: currentAudio?.name,
+      isLoaded: player.isLoaded,
+    });
   };
 
   /**
@@ -118,11 +121,6 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
    */
   const resumeAudio = () => {
     console.log("▶️ resumeAudio() 実行");
-    console.log("現在の状態:", {
-      playing: player.playing,
-      currentAudio: currentAudio?.name,
-      isLoaded: player.isLoaded,
-    });
     
     if (!player.playing && currentAudio) {
       player.play();
@@ -130,6 +128,11 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
     } else {
       console.log("⚠️ 再生できない状態");
     }
+    console.log("現在の状態:", {
+      playing: player.playing,
+      currentAudio: currentAudio?.name,
+      isLoaded: player.isLoaded,
+    });    
   };
 
   /**

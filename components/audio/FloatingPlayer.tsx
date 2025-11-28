@@ -1,79 +1,70 @@
-// import { Image, Pressable, Text, View } from "react-native";
+import { usePlayer } from "@/provider/PlayerProvider";
+import { useState } from "react";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-// import AntDesign from '@expo/vector-icons/AntDesign';
-// import Entypo from '@expo/vector-icons/Entypo';
+export default function FloatingPlayer(){
+    const {
+        currentAudio,
+        isPlaying,
+        isLoading:playerLoading,
+        pauseAudio,
+        resumeAudio,
+        stopAudio
+    } = usePlayer()
 
-// import { AudioData } from "@/assets/data/dummyAudio";
-// import { usePlayer } from "@/provider/PlayerProvider";
-// import Octicons from "@expo/vector-icons/Octicons";
-// import { useAudioPlayerStatus } from "expo-audio";
-// import { router } from "expo-router";
+    if(!currentAudio){
+        return null;
+    }
+    const [is,setIs] = useState(true);
+    const press=()=>{
+        setIs((prev)=>!prev)
+    }
 
+    return(
+        <SafeAreaView edges={["bottom"]} className="bg-gray-900 border-t border-gray-700">
+            <View className="p-3">
 
+                {/** playing file name */}
+                <Text className="text-white text-sm mb-1 text-gray-400">再生中</Text>
+                <Text 
+                    className="text-white text-base font-semibold mb-3"
+                    numberOfLines={1}
+                >
+                    {currentAudio.name}
+                </Text>
 
-// export function FloatingPlayer(){
-  
-//   const audio = AudioData[0];
+                {/** controll button */}
+                <View className="flex-row space-x-2">
+                    <Pressable 
+                        onPress={()=> {
+                            press();
+                            is ?
+                            pauseAudio() : resumeAudio()}}
+                        className="bg-blue-600 p-3 rounded flex-1 mr-2"
+                        disabled={playerLoading}
+                    >
+                        <Text className="text-white text-center font-semibold">
+                            {playerLoading ? "読み込み中..." : is ? "⏸ 一時停止" : "▶ 再生"}
+                        </Text>
+                    </Pressable>
 
-//   //todo
-//   const {player}  = usePlayer();
-//   const playerStatus = useAudioPlayerStatus(player ?? undefined);
+                    {/*pause button */}
+                    <Pressable 
+                        onPress={stopAudio}
+                        className="bg-red-600 p-3 rounded flex-1"    
+                    >
+                        <Text className="text-white text-center font-semibold">■ 停止</Text>
+                    </Pressable>
+                </View>
 
-//   const isReady = !!player;
-
-//   const onTogglePlay = async () => {
-//     console.log("togglePlay pressed", { playerPresent: !!player, status: playerStatus?.playing });
-//     if (!player) { console.warn("no player"); return; }
-//     try {
-//       if (playerStatus?.playing) {
-//         await player.pause();
-//         console.log("paused");
-//       } else {
-//         await player.play();
-//         console.log("played");
-//       }
-//     } catch (e) {
-//       console.warn("play/pause error:", e);
-//     }
-//   };
-  
-//   return (
-//     <View className="flex-row gap-4 items-center p-2 bg-slate-900">
-//       {/* 画像＋タイトル領域：ここを押すとプレーヤー画面へ遷移 */}
-//       <Pressable
-//         onPress={() => router.push("/player")}
-//         className="flex-row gap-4 items-center flex-1"
-//         android_ripple={{ color: "rgba(255,255,255,0.06)" }}
-//       >
-//         {audio.thumbnail_url ? (
-//           <Image
-//             source={{ uri: audio.thumbnail_url }}
-//             className="w-[60] aspect-square rounded-md"
-//           />
-//         ) : (
-//           <Entypo
-//             name="music"
-//             size={60}
-//             className="w-20 h-20 rounded-md"
-//             color="white"
-//           />
-//         )}
-
-//         <View className="gap-1 flex-1">
-//           <Text className="text-white text-xl font-bold">{audio.title}</Text>
-//           <Text className="text-white">{audio.author}</Text>
-//         </View>
-//       </Pressable>
-
-//       {/* 再生／一時停止ボタン：ここは遷移を発生させない */}
-//       <Pressable onPress={onTogglePlay} hitSlop={8}>
-//         {playerStatus.playing ? (
-//           <AntDesign name="pause-circle" size={32} color="white" />
-//         ) : (
-//           <Octicons name="play" size={28} color="white" />
-//         )}
-
-//       </Pressable>
-//     </View>
-//   );
-// }
+                {/** indicator */}
+                {playerLoading && (
+                    <View className="absolute inset-0 bg-gray-900/80 justify-center items-cetner rounded-lg">
+                        <ActivityIndicator color="#fffff" size="large" />
+                    </View>
+                )}
+            </View>
+        </SafeAreaView>
+    )
+}

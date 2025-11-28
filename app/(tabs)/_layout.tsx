@@ -2,9 +2,9 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 
 // import { FloatingPlayer } from '@/components/audio/FloatingPlayer';
+import FloatingPlayer from '@/components/audio/FloatingPlayer';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import Entypo from '@expo/vector-icons/Entypo';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { BottomTabBar } from "@react-navigation/bottom-tabs";
@@ -16,7 +16,7 @@ export default function TabLayout() {
     <Tabs
         tabBar={(props)=> 
             <>
-              {/* <FloatingPlayer /> */}
+              <FloatingPlayer />
               <BottomTabBar {...props}/>
             </>
           }
@@ -30,21 +30,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'MusicList',
-          tabBarIcon: () => (
-            <AntDesign name="cloud" size={24} color="white" />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="OfflineScreen"
-        options={{
           title: 'Offline',
           tabBarIcon: () => (
             <MaterialIcons name="download-for-offline" size={24} color="white" />
           ),
         }}
-      /> 
+      />
+
       <Tabs.Screen
         name="GoogleDriveScreen"
         options={{

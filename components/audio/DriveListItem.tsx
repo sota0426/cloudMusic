@@ -1,12 +1,9 @@
 // DriveListItem.tsx
 
-import { usePlayer } from "@/provider/PlayerProvider";
 import { GoogleDriveFile } from "@/provider/useGoogleDrive";
 import { OneDriveFile } from "@/provider/useOneDrive";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
-import Octicons from "@expo/vector-icons/Octicons";
-import { useAudioPlayerStatus } from "expo-audio";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, Pressable, Text, View } from "react-native";
 // レガシーAPIを使用（ネイティブのみ）
@@ -143,25 +140,6 @@ export default function DriveListItem({
   }
  };
 
- const {player}  = usePlayer();
- const playerStatus = useAudioPlayerStatus(player ?? undefined);
-  
- const onTogglePlay = async () => {
-  console.log("togglePlay pressed", { playerPresent: !!player, status: playerStatus?.playing });
-  if (!player) { console.warn("no player"); return; }
-  try {
-   if (playerStatus?.playing) {
-    await player.pause();
-    console.log("paused");
-   } else {
-    await player.play();
-    console.log("played");
-   }
-  } catch (e) {
-   console.warn("play/pause error:", e);
-  }
- };
-
  return(
   <View 
    className={`
@@ -176,9 +154,11 @@ export default function DriveListItem({
     onClick={() => onPressItem(file)} 
    >
     {isFolder ? (
-     <AntDesign name="folder" color="white" size={24}/>
-    ): (
-     <AntDesign name="minus-circle" color="white" size={24}/>
+      <Text className="text-2xl">📁</Text>
+    ): isAudio ? (
+      <Text className="text-2xl">🎵</Text>
+    ):(
+      <Text className="text-2xl">📄</Text>
     )}
 
     <View className="flex-1">
@@ -186,25 +166,31 @@ export default function DriveListItem({
       {name}
      </Text>
      <View className="flex flex-row items-center gap-1 mt-0.5">
+
       {driveType === "GoogleDrive" ? (
         <Entypo name="google-drive" size={12} color="blue"/> 
       ) : (
         <Entypo name="cloud" size={12} color="blue"/> 
       )}
+
       <Text className="text-gray-400 text-xs">
        {driveType === "GoogleDrive" ? "Google Drive" : "OneDrive"}
       </Text>
+
       {isDownloaded && (
        <>
         <AntDesign name="check-circle" size={10} color="green" />
         <Text className="text-green-500 text-xs">オフライン</Text>
        </>
       )}
+
      </View>
     </View>
 
+
     {!isFolder && isAudio && isNative && (
      <View className="flex flex-row items-center gap-2">
+
       {isDownloading ? (
        <View className="flex flex-row items-center gap-1 px-2">
         <ActivityIndicator size="small" color="blue" />
@@ -221,18 +207,6 @@ export default function DriveListItem({
       )}     
       </View>
     )}
-      
-    {!isFolder && isAudio && (
-      <Pressable onPress={onTogglePlay} hitSlop={8}>
-        <Octicons name="play" size={24} color="white" />
-      </Pressable>
-    )}
-
-
-
-    {isFolder && 
-     <AntDesign name="down" size={20} color="white" />
-    }
    </button>
   </View>
  );

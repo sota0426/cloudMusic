@@ -1,10 +1,12 @@
 import { Text, View } from "react-native";
+// import GoogleSignInScreen from "../../components/login/SignIn_Google";
 
-export default function Music(){
-
+export default function SignInScreen() {
   return(
-    <View className="flex-1  justify-center p-4">
-      <Text className="text-white">hello</Text>
+    <View className="flex items-center justify-center">
+      <Text  className="text-white">
+        heloo
+      </Text>
     </View>
   )
 }

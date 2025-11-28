@@ -140,6 +140,7 @@ export default function OneDriveFilesScreen() {
     Alert.alert("非対応", "このファイル形式は再生できません");
   }
 };
+
   // 戻るボタンのハンドラ
   const goBack = () => {
     if (folderHistory.length > 0) {
@@ -182,32 +183,6 @@ export default function OneDriveFilesScreen() {
         </Pressable>
       )}
 
-      {/* 再生コントロール */}
-      {currentAudio && (
-        <View className="bg-gray-900 p-4 mb-3 rounded-lg">
-          <Text className="text-white text-sm mb-1 text-gray-400">再生中</Text>
-          <Text className="text-white text-base font-semibold mb-3" numberOfLines={1}>
-            {currentAudio.name}
-          </Text>
-          <View className="flex-row space-x-2">
-            <Pressable 
-              onPress={() => isPlaying ? pauseAudio() : resumeAudio()}
-              className="bg-blue-600 p-3 rounded flex-1 mr-2"
-              disabled={playerLoading}
-            >
-              <Text className="text-white text-center font-semibold">
-                {playerLoading ? "読込中..." : isPlaying ? "⏸ 一時停止" : "▶ 再生"}
-              </Text>
-            </Pressable>
-            <Pressable 
-              onPress={stopAudio}
-              className="bg-red-600 p-3 rounded flex-1"
-            >
-              <Text className="text-white text-center font-semibold">■ 停止</Text>
-            </Pressable>
-          </View>
-        </View>
-      )}
 
       {/* ファイルリスト */}
       <FlatList 
@@ -232,11 +207,13 @@ export default function OneDriveFilesScreen() {
                   <Text className="text-green-400 text-xs">再生中</Text>
                 </View>
               )}
-              {isCurrentAudio && !isPlaying && !isDownloading && (
+
+              {isCurrentAudio && !isPlaying && (
                 <View className="flex-row items-center ml-4 mb-2">
                   <Text className="text-yellow-400 text-xs">一時停止中</Text>
                 </View>
               )}
+              
               {isDownloading && (
                 <View className="flex-row items-center ml-4 mb-2">
                   <ActivityIndicator size="small" color="#3b82f6" />
