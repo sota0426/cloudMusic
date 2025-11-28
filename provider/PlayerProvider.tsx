@@ -17,24 +17,31 @@ type PlayerContextType = {
   currentAudio: AudioMetadata | null;
   isPlaying: boolean;
   isLoading: boolean;
-  playAudio: (audio: AudioMetadata) => Promise<void>;
+  playAudio: (audio: AudioMetadata[],index:number) => Promise<void>;
   pauseAudio: () => void;
   resumeAudio: () => void;
   stopAudio: () => void;
   setVolume: (volume: number) => void;
+  playNext: ()=> Promise<void>;
+  playPrev:()=> Promise<void>;
 };
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
 export default function PlayerProvider({ children }: PropsWithChildren) {
+  const [audioList , setAudioList] = useState<AudioMetadata[]>([]);
+  const [currentAudioIndex , setCurrentAudioIndex] = useState<number>(-1);
+
   const [currentAudio, setCurrentAudio] = useState<AudioMetadata | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPlayerPlaying , setIsPlayerPlaying] = useState(false);
 
   // 初期状態では空のプレイヤーを作成
   const player = useAudioPlayer();
 
   // 🔍 デバッグ: プレイヤーの状態を監視
   useEffect(() => {
+    setIsPlayerPlaying(player.playing)
     console.log("🎵 Player状態変更:", {
       playing: player.playing,
       volume: player.volume,
@@ -42,12 +49,19 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
       currentTime: player.currentTime,
       isLoaded: player.isLoaded,
     });
-  }, [player.playing, player.isLoaded]);
+  }, [player.isLoaded]);
 
   /**
    * 音声を再生
    */
-  const playAudio = async (audio: AudioMetadata) => {
+  const playAudio = async (list: AudioMetadata[], index:number) => {
+    if(index < 0 || index >= list.length){
+      console.error("❌ 無効なインデックス");
+      return
+    }
+
+    const audio = list[index];
+
     try {
       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       console.log("🎵 playAudio() 開始");
@@ -79,6 +93,7 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
 
       console.log("▶️ player.play() 実行中...");
       player.play();
+      setIsPlayerPlaying(true);
       
       console.log("✅ player.play() 完了");
       console.log("🔍 play後のプレイヤー状態:", {
@@ -86,6 +101,8 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
         volume: player.volume,
       });
 
+      setAudioList(list);
+      setCurrentAudioIndex(index);
       setCurrentAudio(audio);
       console.log("✅ playAudio() 完了");
       
@@ -99,12 +116,45 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
   };
 
   /**
+       * 次のオーディオを再生
+       * 新しい関数を追加
+       */
+  const playNext = async () => {
+    if (currentAudioIndex === -1 || audioList.length === 0) return;
+
+    const nextIndex = currentAudioIndex + 1;
+    if (nextIndex < audioList.length) {
+        console.log(`⏩ 次へ: インデックス ${currentAudioIndex} -> ${nextIndex}`);
+        await playAudio(audioList, nextIndex);
+    } else {
+        console.log("⚠️ これ以上次はありません (リストの終端)");
+    }
+  };
+
+  /**
+  * 前のオーディオを再生
+  * 新しい関数を追加
+  */
+  const playPrev = async () => {
+    if (currentAudioIndex === -1 || audioList.length === 0) return;
+
+    const prevIndex = currentAudioIndex - 1;
+    if (prevIndex >= 0) {
+        console.log(`⏪ 前へ: インデックス ${currentAudioIndex} -> ${prevIndex}`);
+        await playAudio(audioList, prevIndex);
+    } else {
+        console.log("⚠️ これ以上前はありません (リストの始端)");
+    }
+  }
+    
+    /**
    * 一時停止
    */
   const pauseAudio = () => {
     console.log("▶️ pauseAudio() 実行");
     if (player.playing) {
       player.pause();
+      setIsPlayerPlaying(false);
       console.log("✅ 一時停止完了");
     } else {
       console.log("⚠️ 既に停止中");
@@ -124,6 +174,7 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
     
     if (!player.playing && currentAudio) {
       player.play();
+      setIsPlayerPlaying(true);
       console.log("✅ 再生再開完了");
     } else {
       console.log("⚠️ 再生できない状態");
@@ -142,6 +193,7 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
     console.log("⏹️ stopAudio() 実行");
     player.pause();
     setCurrentAudio(null);
+    setIsPlayerPlaying(false);
     console.log("✅ 停止完了");
   };
 
@@ -163,6 +215,8 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
         isLoading,
         playAudio,
         pauseAudio,
+        playNext,
+        playPrev,
         resumeAudio,
         stopAudio,
         setVolume,
