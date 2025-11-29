@@ -54,12 +54,15 @@ export default function DriveListItem({
   return null; 
  }
 
+
  // ダウンロードファイルのパスを取得
  const getLocalFilePath = () => {
   if (!id) return null;
   const sanitizedName = name.replace(/[^a-zA-Z0-9._-]/g, '_');
   return `${DOCUMENT_DIR}music/${id}_${sanitizedName}`;
  };
+
+
 
  // ダウンロード状態を確認
  useEffect(() => {
@@ -68,8 +71,8 @@ export default function DriveListItem({
    if (!localPath) return;
    
    try {
-    const fileInfo = await FileSystem.getInfoAsync(localPath);
-    setIsDownloaded(fileInfo.exists);
+    // const fileInfo = await FileSystem.getInfoAsync(localPath);
+    // setIsDownloaded(fileInfo.exists);
    } catch (error) {
     console.error('Error checking download status:', error);
    }
@@ -80,65 +83,65 @@ export default function DriveListItem({
   }
  }, [id, name]);
 
- // ファイルをダウンロード
- const handleDownload = async () => {
-  const localPath = getLocalFilePath();
-  if (!localPath || !file.webContentLink) return;
+//  // ファイルをダウンロード
+//  const handleDownload = async () => {
+//   const localPath = getLocalFilePath();
+//   if (!localPath || !file.webContentLink) return;
 
-  try {
-    console.log("Downloeding now")
-  setIsDownloading(true);
-   setDownloadProgress(0);
+//   try {
+//     console.log("Downloeding now")
+//   setIsDownloading(true);
+//    setDownloadProgress(0);
 
-   // ディレクトリを作成
-   const directory = `${DOCUMENT_DIR}music/`;
-   const dirInfo = await FileSystem.getInfoAsync(directory);
-   if (!dirInfo.exists) {
-    console.log("Downloeding now")
+//    // ディレクトリを作成
+//    const directory = `${DOCUMENT_DIR}music/`;
+//    const dirInfo = await FileSystem.getInfoAsync(directory);
+//    if (!dirInfo.exists) {
+//     console.log("Downloeding now")
 
-    await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
-   }
+//     await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
+//    }
 
-   // ダウンロード
-   const downloadResumable = FileSystem.createDownloadResumable(
-    file.webContentLink,
-    localPath,
-    {},
-    (downloadProgress) => {
-     const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
-     setDownloadProgress(Math.round(progress * 100));
-    }
-   );
+//    // ダウンロード
+//    const downloadResumable = FileSystem.createDownloadResumable(
+//     file.webContentLink,
+//     localPath,
+//     {},
+//     (downloadProgress) => {
+//      const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
+//      setDownloadProgress(Math.round(progress * 100));
+//     }
+//    );
 
-   const result = await downloadResumable.downloadAsync();
+//    const result = await downloadResumable.downloadAsync();
    
-   if (result) {
-    setIsDownloaded(true);
-    console.log('Download completed:', result.uri);
-   }
-  } catch (error) {
-   console.error('Download error:', error);
-   alert('ダウンロードに失敗しました');
-  } finally {
-   setIsDownloading(false);
-   setDownloadProgress(0);
-  }
- };
+//    if (result) {
+//     setIsDownloaded(true);
+//     console.log('Download completed:', result.uri);
+//    }
+//   } catch (error) {
+//    console.error('Download error:', error);
+//    alert('ダウンロードに失敗しました');
+//   } finally {
+//    setIsDownloading(false);
+//    setDownloadProgress(0);
+//   }
+//  };
 
- // ダウンロードしたファイルを削除
- const handleDeleteDownload = async () => {
-  const localPath = getLocalFilePath();
-  if (!localPath) return;
+//  // ダウンロードしたファイルを削除
+//  const handleDeleteDownload = async () => {
+//   const localPath = getLocalFilePath();
+//   if (!localPath) return;
 
-  try {
-   await FileSystem.deleteAsync(localPath);
-   setIsDownloaded(false);
-   console.log('Download deleted:', localPath);
-  } catch (error) {
-   console.error('Delete error:', error);
-   alert('削除に失敗しました');
-  }
- };
+//   try {
+//    await FileSystem.deleteAsync(localPath);
+//    setIsDownloaded(false);
+//    console.log('Download deleted:', localPath);
+//   } catch (error) {
+//    console.error('Delete error:', error);
+//    alert('削除に失敗しました');
+//   }
+//  };
 
  return(
   <View 

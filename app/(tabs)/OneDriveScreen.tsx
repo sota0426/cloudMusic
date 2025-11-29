@@ -26,6 +26,7 @@ export default function OneDriveFilesScreen() {
     playAudio, 
     pauseAudio, 
     resumeAudio, 
+    stopAudio,
     currentAudio, 
     isPlaying,
     isLoading: playerLoading
@@ -223,7 +224,7 @@ export default function OneDriveFilesScreen() {
       <View className="flex-row items-center mb-4">
         <Entypo name="cloud" size={24} color="#0078d4" />
         <Text className="text-white text-2xl ml-2">
-          {loading ? "ロード中..." : "OneDrive Files"}
+          {loading ? "ロード中..." : "OneDrive"}
         </Text>
         
 
