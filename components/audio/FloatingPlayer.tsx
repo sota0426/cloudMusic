@@ -1,6 +1,7 @@
 import { usePlayer } from "@/provider/PlayerProvider";
 import Foundation from '@expo/vector-icons/Foundation';
 import Slider from '@react-native-community/slider';
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -76,6 +77,7 @@ export default function FloatingPlayer(){
     };
 
     return(
+        <Pressable onPress={()=> router.push("/(player)/player?modal=true")}>
         <SafeAreaView edges={["bottom"]} className="bg-gray-900 border-t border-gray-700">
             <View className="p-3">
 
@@ -116,7 +118,10 @@ export default function FloatingPlayer(){
 
                     {/** playPrev */}
                     <Pressable
-                        onPress={playPrev}
+                        onPress={(e)=> {
+                            e.stopPropagation();
+                            playPrev();
+                        }}
                         className="bg-gray-800 p-3 rounded"
                     >
                         <Text className="text-center">
@@ -126,7 +131,9 @@ export default function FloatingPlayer(){
 
                      {/** pause or play */}
                      <Pressable
-                        onPress={handlePlayPause}
+                        onPress={(e)=> {
+                            e.stopPropagation();
+                            handlePlayPause()}}
                         className="bg-gray-800 p-3 rounded flex-1 mr-2"
                     >
                         <Text className="text-center">
@@ -137,7 +144,9 @@ export default function FloatingPlayer(){
 
                       {/** playNext */}
                       <Pressable
-                        onPress={playNext}
+                        onPress={(e)=> {
+                            e.stopPropagation();
+                            playNext()}}
                         className="bg-gray-800 p-3 rounded"
                         disabled={playerLoading}
                     >
@@ -155,5 +164,6 @@ export default function FloatingPlayer(){
                 )}
             </View>
         </SafeAreaView>
+    </Pressable>
     )
 }

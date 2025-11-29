@@ -15,6 +15,8 @@ export interface AudioMetadata {
 type PlayerContextType = {
   player: AudioPlayer;
   currentAudio: AudioMetadata | null;
+  audioList:AudioMetadata[];
+  currentAudioIndex:number;
   isPlaying: boolean;
   isLoading: boolean;
   playAudio: (audio: AudioMetadata[],index:number) => Promise<void>;
@@ -213,6 +215,8 @@ export default function PlayerProvider({ children }: PropsWithChildren) {
         currentAudio,
         isPlaying: player.playing,
         isLoading,
+        audioList,
+        currentAudioIndex,
         playAudio,
         pauseAudio,
         playNext,
