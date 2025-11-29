@@ -26,7 +26,6 @@ export default function OneDriveFilesScreen() {
     playAudio, 
     pauseAudio, 
     resumeAudio, 
-    stopAudio, 
     currentAudio, 
     isPlaying,
     isLoading: playerLoading
@@ -108,18 +107,43 @@ export default function OneDriveFilesScreen() {
         return;
       }
 
-      console.log("✅ URL取得成功");
-      console.log("🎵 playAudio() を呼び出します");
+      // 1.現在表示されているファイルリストから音楽ファイルのみ抽出
+      const audioList = files
+        .filter(fileItem => isAudioFile(fileItem.name))
+        .map(fileItem => ({
+          id: item.id,
+          name: item.name,
+          url: "",
+          source: "onedrive" as const,
+          mimeType: item.file?.mimeType,
+        })
+      )
 
-      // PlayerProviderを使用して再生
-      await playAudio({
-        id: item.id,
-        name: item.name,
-        url: downloadUrl,
-        source: "onedrive",
+      // 2.選択されたアイテムのメタデータを確定
+      const selectedAudioMetaData ={
+        id:item.id,
+        name:item.name,
+        url:downloadUrl,
+        source: "onedrive" as const,
         mimeType: item.file?.mimeType,
-      });
-      
+      }
+
+      // 3.audioList内で選択されたアイテムのインデックスを見つける
+      let initialIndex = audioList.findIndex(audio => audio.id === item.id)
+
+      // 4. audioList 内の対応するアイテムのURLで更新する
+      if(initialIndex !== -1){
+        audioList[initialIndex].url = downloadUrl;
+      }else{
+        audioList.unshift(selectedAudioMetaData);
+        initialIndex = 0;
+      }
+
+      console.log(`🎵 ${audioList.length}個のファイルを再生リストとして渡します。インデックス: ${initialIndex}`);
+
+      await playAudio(audioList , initialIndex);
+
+
       console.log("✅ handlePlayAudio() 完了");
       
     } catch (error) {
@@ -167,6 +191,7 @@ export default function OneDriveFilesScreen() {
     Alert.alert("非対応", "このファイル形式は再生できません");
   }
 };
+
   // 戻るボタンのハンドラ
   const goBack = () => {
     if (folderHistory.length > 0) {
@@ -200,6 +225,9 @@ export default function OneDriveFilesScreen() {
         <Text className="text-white text-2xl ml-2">
           {loading ? "ロード中..." : "OneDrive Files"}
         </Text>
+        
+
+
         {loading && <ActivityIndicator size="small" color="white" className="ml-2" />}
       </View>
       
@@ -210,9 +238,6 @@ export default function OneDriveFilesScreen() {
         </Pressable>
       )}
 
-      <PlayScreen currentAudio={currentAudio} />
-
-   
 
       {/* ファイルリスト */}
       <FlatList 
@@ -238,8 +263,8 @@ export default function OneDriveFilesScreen() {
                   <Text className="text-green-400 text-xs">再生中</Text>
                 </View>
               )}
-              
-              {isCurrentAudio && !isPlaying && !isDownloading && (
+
+              {isCurrentAudio && !isPlaying && (
                 <View className="flex-row items-center ml-4 mb-2">
                   <Text className="text-yellow-400 text-xs">一時停止中</Text>
                 </View>
