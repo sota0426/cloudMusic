@@ -147,16 +147,13 @@ export default function GoogleDriveFlesScreen(){
 
   if(!isAuthenticated){
     return(
-      <View className="flex-1 items-cetner justify-center bg-black">
+      <View className="flex-1 items-center justify-center bg-black">
         <Entypo name="google-drive" size={48} color="white" />
         <Text className="text-white text-xl mb-4 mt-4">
           Google Drive にサインインしてください。
         </Text>
-        <Pressable 
-          onPress={signIn}
-          className="p-3 bg-blue-300 rounded"
-        >
-          <Text className="text-white text-lg">Google サインイン</Text>
+        <Pressable onPress={signIn} className="p-3 bg-blue-600 rounded">
+          <Text className="text-white text-lg">Microsoft サインイン</Text>
         </Pressable>
       </View> 
     );
