@@ -14,6 +14,7 @@ export default function FloatingPlayer(){
         isLoading:playerLoading,
         pauseAudio,
         resumeAudio,
+        stopAudio,
         playNext,
         playPrev
     } = usePlayer()
@@ -38,6 +39,10 @@ export default function FloatingPlayer(){
     if(!currentAudio){
         return null;
     }
+
+    const handlePlayStop =()=>(
+        stopAudio()
+    );
 
     const handlePlayPause =()=> isPlaying 
         ? pauseAudio() 
@@ -82,7 +87,7 @@ export default function FloatingPlayer(){
             <View className="p-3">
 
                 {/** playing file name */}
-                <Text className="text-white text-sm mb-1 text-gray-400">再生中</Text>
+                <Text className="text-sm mb-1 text-gray-400">再生中</Text>
                 <Text 
                     className="text-white text-base font-semibold mb-3"
                     numberOfLines={1}
@@ -114,7 +119,7 @@ export default function FloatingPlayer(){
 
 
                 {/** controll button */}
-                <View className="flex-row space-x-2">
+                <View className="flex-row justify-between">
 
                     {/** playPrev */}
                     <Pressable
@@ -122,7 +127,7 @@ export default function FloatingPlayer(){
                             e.stopPropagation();
                             playPrev();
                         }}
-                        className="bg-gray-800 p-3 rounded"
+                        className="bg-gray-800 p-3 rounded mr-2"
                     >
                         <Text className="text-center">
                             <Foundation  name="previous" size={20} color="white" />
@@ -134,7 +139,7 @@ export default function FloatingPlayer(){
                         onPress={(e)=> {
                             e.stopPropagation();
                             handlePlayPause()}}
-                        className="bg-gray-800 p-3 rounded flex-1 mr-2"
+                        className="bg-gray-800 p-3 rounded mr-2 flex-1"
                     >
                         <Text className="text-center">
                             <Foundation  name={isPlaying ? "pause" : "play"} size={20} color="white" />
@@ -142,12 +147,24 @@ export default function FloatingPlayer(){
                     </Pressable>
 
 
+                    {/** stop */}
+                    <Pressable
+                        onPress={(e)=> {
+                            e.stopPropagation();
+                            handlePlayStop()}}
+                        className="bg-gray-800 p-3 rounded mr-2 flex-1"
+                    >
+                        <Text className="text-center">
+                            <Foundation  name="stop" size={20} color="white" />
+                        </Text>
+                    </Pressable>
+
                       {/** playNext */}
                       <Pressable
                         onPress={(e)=> {
                             e.stopPropagation();
                             playNext()}}
-                        className="bg-gray-800 p-3 rounded"
+                        className="bg-gray-800 p-3 rounded "
                         disabled={playerLoading}
                     >
                         <Text className="text-center">

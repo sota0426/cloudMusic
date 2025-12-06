@@ -1,7 +1,7 @@
 import { usePlayer } from "@/provider/PlayerProvider"
 import Foundation from "@expo/vector-icons/Foundation"
 import Slider from "@react-native-community/slider"
-import { router, Stack } from "expo-router"
+import { Stack, useRouter } from "expo-router"
 import React, { useEffect, useState } from "react"
 import { ActivityIndicator, Button, Pressable, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -31,6 +31,7 @@ export default function FullPlayerScreen(){
         isLoading: playerLoading,
         pauseAudio, 
         resumeAudio, 
+        stopAudio,
         playNext, 
         playPrev,
         playAudio 
@@ -72,6 +73,12 @@ export default function FullPlayerScreen(){
         
     const handleSlidingStart = () =>{
         setIsSeeking(true);
+    }
+
+    const router = useRouter();
+    const handlePlayStop=()=>{
+        stopAudio();
+        router.back();
     }
 
     const handleSeek = async(value:number)=>{
@@ -133,12 +140,9 @@ export default function FullPlayerScreen(){
             />
             
             <View className="flex border-gray-700 p-3">
-                <Text className="text-white text-xl font-semibold p-3 ">
-                    プレイリスト ( {audioList.length} 曲)
-                </Text>
 
                 {/** playing file name */}
-                <Text className="text-white text-sm mb-1 text-gray-400">再生中</Text>
+                <Text className="text-sm mb-1 text-gray-400">再生中</Text>
                 <Text 
                     className="text-white text-base font-semibold mb-3"
                     numberOfLines={1}
@@ -179,7 +183,7 @@ export default function FullPlayerScreen(){
                             e.stopPropagation();
                             playPrev();
                         }}
-                        className="bg-gray-800 p-3 rounded"
+                        className="bg-gray-800 p-3 mr-2 rounded"
                     >
                         <Text className="text-center">
                             <Foundation  name="previous" size={20} color="white" />
@@ -198,6 +202,19 @@ export default function FullPlayerScreen(){
                         </Text>
                     </Pressable>
 
+
+                     {/** playNext */}
+                      <Pressable
+                        onPress={(e)=> {
+                            e.stopPropagation();
+                            handlePlayStop()}}
+                        className="bg-gray-800 p-3 flex-1 rounded mr-2"
+                        disabled={playerLoading}
+                    >
+                        <Text className="text-center">
+                            <Foundation  name="stop" size={20} color="white" />
+                        </Text>
+                    </Pressable>
 
                       {/** playNext */}
                       <Pressable
@@ -222,6 +239,9 @@ export default function FullPlayerScreen(){
                 )}
 
             </View>
+                <Text className="text-white text-xl font-semibold p-3 ">
+                    プレイリスト ( {audioList.length} 曲)
+                </Text>
         </SafeAreaView>
     )
 }

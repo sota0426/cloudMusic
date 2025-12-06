@@ -1,9 +1,11 @@
 import DriveListItem from "@/components/audio/DriveListItem";
 import { AudioMetadata, usePlayer } from "@/provider/PlayerProvider";
 import { GoogleDriveFile, useGoogleDrive } from "@/provider/useGoogleDrive";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const ROOT_ID="root";
 
@@ -46,6 +48,10 @@ export default function GoogleDriveFlesScreen(){
     }
     const lowerName = file.name.toLocaleLowerCase();
     return AUDIO_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+  }
+
+  const handleFetchOneDriveFiles=()=>{
+    fetchGoogleDriveFiles();
   }
 
   const handlePalyAudio = async (item:GoogleDriveFile) =>{
@@ -153,7 +159,7 @@ export default function GoogleDriveFlesScreen(){
           Google Drive にサインインしてください。
         </Text>
         <Pressable onPress={signIn} className="p-3 bg-blue-600 rounded">
-          <Text className="text-white text-lg">Microsoft サインイン</Text>
+          <Text className="text-white text-lg">Google サインイン</Text>
         </Pressable>
       </View> 
     );
@@ -161,18 +167,22 @@ export default function GoogleDriveFlesScreen(){
 
   
   return (
-    <View className="flex-1 bg-black p-4">
+    <SafeAreaView className="flex-1 bg-black p-4">
       {/* ヘッダー */}
-      <View className="flex-row items-center mb-4">
+      <View className="flex-row  items-center mb-4 justify-between">
+        <View className="flex-row ">
         <Entypo name="google-drive" size={24} color="#0078d4" />
         <Text className="text-white text-2xl ml-2">
-          {loading ? "ロード中..." : "Google Drive"}
+          {loading ? "ロード中..." : "GoogleDrive"}
         </Text>
-        
-
-
-        {loading && <ActivityIndicator size="small" color="white" className="ml-2" />}
+        </View>
+        {!loading &&
+         <Pressable onPress={handleFetchOneDriveFiles} className="ml-2 items-center">
+          <AntDesign name="reload" size={16} color="white" />        
+        </Pressable>
+        }        
       </View>
+        {loading && <ActivityIndicator size="small" color="white" className="ml-2" />}
       
       {/* 戻るボタン */}
       {currentFolderId !== ROOT_ID && (
@@ -228,6 +238,6 @@ export default function GoogleDriveFlesScreen(){
           </Text>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }

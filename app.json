@@ -21,7 +21,22 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.iimorisota.googleAuth"
+      "package": "com.iimorisota.googleAuth",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              // useOneDrive.ts や MicrosoftSignInScreen.tsx でハードコードしたスキームを設定
+              "scheme": "msauth.com.iimorisota.googleAuth" 
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "output": "static",

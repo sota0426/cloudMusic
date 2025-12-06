@@ -3,9 +3,11 @@
 import DriveListItem from "@/components/audio/DriveListItem";
 import { usePlayer } from "@/provider/PlayerProvider";
 import { OneDriveFile, useOneDrive } from "@/provider/useOneDrive";
+import AntDesign from '@expo/vector-icons/AntDesign';
 import Entypo from "@expo/vector-icons/Entypo";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const ROOT_ID = "root";
 
@@ -48,6 +50,10 @@ export default function OneDriveFilesScreen() {
     return AUDIO_EXTENSIONS.some(ext => lowerName.endsWith(ext));
   };
 
+  const handleFetchOneDriveFiles = ()=>(
+    fetchOneDriveFiles()
+  )
+
   const PlayScreen =(currentAudio:any)=>{
     if(!currentAudio) return;
     return(
@@ -77,6 +83,7 @@ export default function OneDriveFilesScreen() {
     )
   }
 
+  
   // 音声ファイルの再生処理
   const handlePlayAudio = async (item: OneDriveFile) => {
     try {
@@ -219,16 +226,20 @@ export default function OneDriveFilesScreen() {
 
 
   return (
-    <View className="flex-1 bg-black p-4">
+    <SafeAreaView className="flex-1 bg-black p-4">
       {/* ヘッダー */}
-      <View className="flex-row items-center mb-4">
+      <View className="flex-row  items-center mb-4 justify-between">
+        <View className="flex-row ">
         <Entypo name="cloud" size={24} color="#0078d4" />
         <Text className="text-white text-2xl ml-2">
           {loading ? "ロード中..." : "OneDrive"}
         </Text>
-        
-
-
+        </View>
+        {!loading &&
+         <Pressable onPress={handleFetchOneDriveFiles} className="ml-2 items-center">
+          <AntDesign name="reload" size={16} color="white" />        
+        </Pressable>
+        }          
         {loading && <ActivityIndicator size="small" color="white" className="ml-2" />}
       </View>
       
@@ -238,7 +249,6 @@ export default function OneDriveFilesScreen() {
           <Text className="text-white text-base">← 戻る</Text>
         </Pressable>
       )}
-
 
       {/* ファイルリスト */}
       <FlatList 
@@ -286,6 +296,6 @@ export default function OneDriveFilesScreen() {
           </Text>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
