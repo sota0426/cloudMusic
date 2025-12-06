@@ -175,7 +175,7 @@ export default function FullPlayerScreen(){
 
 
                 {/** controll button */}
-                <View className="flex-row space-x-2">
+                <View className="flex-row ">
 
                     {/** playPrev */}
                     <Pressable
@@ -239,7 +239,7 @@ export default function FullPlayerScreen(){
                 )}
 
             </View>
-                <Text className="text-white text-xl font-semibold p-3 ">
+            <Text className="text-white text-xl font-semibold p-3 ">
                     プレイリスト ( {audioList.length} 曲)
                 </Text>
         </SafeAreaView>

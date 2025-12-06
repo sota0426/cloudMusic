@@ -30,7 +30,6 @@ export default function DriveListItem({
  driveType,
  file,
  onPressItem,
- indentationLevel = 0,
 }: DriveListItemProps){
 
  const { name, mimeType, file: oneDriveFile, folder: oneDriveFolder, id } = file;
