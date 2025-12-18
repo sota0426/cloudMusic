@@ -66,7 +66,6 @@ const REDIRECT_URI = isWeb
 
 
 // --- カスタムフック ---
-
 export const useOneDrive = () => {
   const [microsoftUserInfo, setMicrosoftUserInfo] = useState<MicrosoftUserInfo | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);

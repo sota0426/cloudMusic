@@ -38,7 +38,7 @@ export default function TabLayout() {
         }}
       />
 
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="GoogleDriveScreen"
         options={{
           title: 'GoogleDrive',
@@ -46,7 +46,7 @@ export default function TabLayout() {
             <Entypo name="google-drive" size={24} color="white" />
           ),
         }}
-      />                
+      />                 */}
       <Tabs.Screen
         name="OneDriveScreen"
         options={{
