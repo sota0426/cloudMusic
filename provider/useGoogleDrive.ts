@@ -2,7 +2,24 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
-import { Platform } from "react-native"; // 👈 追加: Web判定用
+import { Platform } from "react-native";
+
+// ✅ レガシーAPIをインポート
+import {
+  cacheDirectory,
+  createDownloadResumable,
+  deleteAsync,
+  documentDirectory,
+  getInfoAsync,
+  readDirectoryAsync,
+} from 'expo-file-system/legacy';
+
+console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+console.log("🔍 Legacy FileSystem 確認:");
+console.log("documentDirectory:", documentDirectory);
+console.log("cacheDirectory:", cacheDirectory);
+console.log("Platform:", Platform.OS);
+console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -29,9 +46,7 @@ export const useGoogleDrive = () => {
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<GoogleDriveFile[]>([]);
 
-  // 認証リクエストの設定
   const [googleRequest, googleResponse, promptAsync] = Google.useAuthRequest({
-    // ⚠️ ご自身のクライアントIDに合わせてください
     androidClientId: "567214050375-70p13dhdknjbebv9uv8cjd7qhjd4bkie.apps.googleusercontent.com",
     iosClientId: "567214050375-4jstuf30dbvr9lfuicf0mk6g3v5smqaa.apps.googleusercontent.com",
     webClientId: "567214050375-6nmenaun0puabssou05m0er5tc7dof77.apps.googleusercontent.com",
@@ -43,28 +58,22 @@ export const useGoogleDrive = () => {
     ],
   });
 
-  // 起動時に保存された認証情報をロード
   useEffect(() => {
     loadStoredAuth();
   }, []);
 
-  // 認証レスポンスの処理
   useEffect(() => {
     if (googleResponse?.type === "success") {
       handleAuthSuccess(googleResponse.authentication);
     }
   }, [googleResponse]);
 
-  /**
-   * 🔐 保存された認証情報の読み込み (OneDrive版と同様のロジック)
-   */
   const loadStoredAuth = async () => {
     const storedData = await AsyncStorage.getItem("@googleAuth");
     if (!storedData) return;
 
     const authData = JSON.parse(storedData);
     
-    // 有効期限チェック (現在時刻より未来であれば有効)
     if (authData.expiresAt > Date.now()) {
       setGoogleUserInfo(authData.user);
       setAccessToken(authData.accessToken);
@@ -74,9 +83,6 @@ export const useGoogleDrive = () => {
     }
   };
 
-  /**
-   * ✅ 認証成功時の処理
-   */
   const handleAuthSuccess = async (authentication: any) => {
     if (!authentication?.accessToken) return;
 
@@ -85,7 +91,6 @@ export const useGoogleDrive = () => {
       const user = await getGoogleUserInfo(authentication.accessToken);
 
       if (user) {
-        // トークン有効期限の計算 (デフォルト3600秒)
         const expiresAt = Date.now() + (authentication.expiresIn || 3600) * 1000;
 
         const authData = {
@@ -114,15 +119,11 @@ export const useGoogleDrive = () => {
     }
   };
 
-  /**
-   * 📂 ファイル一覧取得
-   */
   const fetchGoogleDriveFiles = async (parentFolderId: string = 'root') => {
     if (!accessToken) return;
 
     setLoading(true);
     try {
-      // フォルダまたは音声ファイルを検索
       const query = encodeURIComponent(
         `(mimeType='application/vnd.google-apps.folder' or mimeType contains 'audio/') and '${parentFolderId}' in parents and trashed=false`
       );
@@ -141,10 +142,6 @@ export const useGoogleDrive = () => {
     }
   };
 
-  /**
-   * 🔗 ダウンロードURLの取得 (ここが最重要修正ポイント)
-   * Web環境とNative環境で取得方法を分岐させます。
-   */
   const getDownloadUrl = async (fileId: string): Promise<string | null> => {
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("🔑 getDownloadUrl() 開始 (Google Drive)");
@@ -157,12 +154,6 @@ export const useGoogleDrive = () => {
     const apiUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
 
     try {
-      // ---------------------------------------------------------
-      // 🌐 【Webの場合】 FetchしてBlobを作成する
-      // OneDriveと違い、GoogleはAPI経由でバイナリを流すため、
-      // ブラウザ標準のプレーヤーが直接認証ヘッダー付きでアクセスできません。
-      // そのため、JSでデータを取得(fetch)し、Blob URLに変換します。
-      // ---------------------------------------------------------
       if (Platform.OS === 'web') {
         console.log("🌐 Web環境: Fetch -> Blob変換を実行");
         
@@ -175,24 +166,121 @@ export const useGoogleDrive = () => {
         }
         
         const blob = await response.blob();
-        // ブラウザメモリ上に一時的なURLを作成 (例: blob:http://localhost:8081/...)
         const blobUrl = URL.createObjectURL(blob);
         console.log("✅ Web用Blob URL生成完了:", blobUrl);
         
         return blobUrl; 
       }
 
-      // ---------------------------------------------------------
-      // 📱 【Native (iOS/Android) の場合】
-      // ExpoのAVモジュールなどはヘッダーを扱いにくいため、
-      // クエリパラメータにaccess_tokenを埋め込む方式を採用します。
-      // ---------------------------------------------------------
-      console.log("📱 Native環境: トークン付きURLを使用");
-      return `${apiUrl}&access_token=${accessToken}`;
+      console.warn("⚠️ Native環境ではdownloadToLocalを使用してください");
+      return null;
 
     } catch (error) {
       console.error("❌ Download URL fetch error:", error);
       return null;
+    }
+  };
+
+  const downloadToLocal = async (fileId: string, fileName: string): Promise<string | null> => {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📥 downloadToLocal() 開始");
+    console.log("📁 ファイル名:", fileName);
+
+    if (!accessToken) {
+      console.error("❌ Access token is not available");
+      return null;
+    }
+
+    if (Platform.OS === 'web') {
+      console.warn("⚠️ Web環境ではgetDownloadUrlを使用してください");
+      return null;
+    }
+
+    // ✅ レガシーAPIでは documentDirectory が直接使える
+    const baseDirectory = documentDirectory || cacheDirectory;
+    
+    if (!baseDirectory) {
+      console.error("❌ ディレクトリが利用できません");
+      return null;
+    }
+
+    console.log("✅ 使用するディレクトリ:", baseDirectory);
+    
+    const apiUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileUri = baseDirectory + sanitizedFileName;
+    
+    console.log("📂 保存先URI:", fileUri);
+    
+    try {
+      // キャッシュチェック
+      console.log("🔍 キャッシュチェック中...");
+      const fileInfo = await getInfoAsync(fileUri);
+      console.log("ℹ️ ファイル情報:", fileInfo);
+      
+      if (fileInfo.exists) {
+        console.log("✅ キャッシュヒット:", sanitizedFileName);
+        return fileUri;
+      }
+      
+      // ダウンロード
+      console.log("⬇️ ダウンロード開始...");
+      const downloadResumable = createDownloadResumable(
+        apiUrl,
+        fileUri,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }
+      );
+      
+      console.log("⏳ ダウンロード実行中...");
+      const result = await downloadResumable.downloadAsync();
+      
+      console.log("📊 ダウンロード結果:", result);
+      
+      if (!result) {
+        throw new Error("ダウンロード失敗: result is null");
+      }
+      
+      console.log("✅ ダウンロード完了:", result.uri);
+      return result.uri;
+      
+    } catch (error) {
+      console.error("❌ ダウンロードエラー詳細:");
+      console.error("  - エラー:", error);
+      console.error("  - メッセージ:", (error as Error).message);
+      return null;
+    }
+  };
+
+  const clearCache = async () => {
+    if (Platform.OS === 'web') {
+      console.log("🌐 Web環境: キャッシュクリアはスキップ");
+      return;
+    }
+
+    const baseDirectory = documentDirectory || cacheDirectory;
+    
+    if (!baseDirectory) {
+      console.warn("⚠️ ディレクトリが利用できません");
+      return;
+    }
+
+    try {
+      const dirInfo = await getInfoAsync(baseDirectory);
+      if (dirInfo.exists) {
+        const filesList = await readDirectoryAsync(baseDirectory);
+        console.log(`🗑️ ${filesList.length}個のキャッシュファイルを削除します`);
+        
+        for (const file of filesList) {
+          await deleteAsync(baseDirectory + file, {
+            idempotent: true
+          });
+        }
+        console.log("✅ キャッシュクリア完了");
+      }
+    } catch (error) {
+      console.error("❌ キャッシュクリアエラー:", error);
     }
   };
 
@@ -211,8 +299,9 @@ export const useGoogleDrive = () => {
     promptAsync();
   };
 
-  const signOut = () => {
-    clearGoogleStorage();
+  const signOut = async () => {
+    await clearCache();
+    await clearGoogleStorage();
   };
 
   return {
@@ -220,12 +309,14 @@ export const useGoogleDrive = () => {
     accessToken,
     loading,
     files,
-    googleRequest,       // useOneDriveに合わせて追加
-    googleResponse, // useOneDriveのresponseに合わせてリネームせずそのまま
+    googleRequest,
+    googleResponse,
     signIn,
     signOut,
     fetchGoogleDriveFiles,
     getDownloadUrl,
+    downloadToLocal,
+    clearCache,
     getAccessToken,
     isAuthenticated: !!googleUserInfo,
   };
