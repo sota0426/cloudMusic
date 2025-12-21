@@ -28,7 +28,7 @@ export default function MicrosoftSignInScreen({
 
  // --- UI ---
   return (
-    <View className="flex-1 px-5 py-10 items-center justify-center">
+    <View className="flex-1 px-5 items-center justify-center">
       {/* ヘッダー */}
       <Text className="text-2xl font-bold mb-8 text-blue-600">
         <Entypo name="cloud" size={24} /> {/* OneDriveっぽいアイコン */}

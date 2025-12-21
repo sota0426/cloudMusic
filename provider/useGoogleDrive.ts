@@ -295,13 +295,61 @@ export const useGoogleDrive = () => {
     setFiles([]);
   };
 
+  /**
+   * 🔐 通常のサインイン
+   */
   const signIn = () => {
+    console.log("🔐 サインイン開始");
     promptAsync();
   };
 
+  /**
+   * 🚪 ログアウト（完全なセッションクリア）
+   */
   const signOut = async () => {
+    console.log("🚪 ログアウト開始");
+    
+    // 1. キャッシュをクリア
     await clearCache();
+    
+    // 2. ストレージをクリア
     await clearGoogleStorage();
+    
+    // 3. Web環境の場合、認証セッションを完全にクリア
+    if (Platform.OS === 'web') {
+      try {
+        // ブラウザを閉じる
+        await WebBrowser.dismissBrowser();
+        
+        // Google のログアウトURLにアクセスしてセッションをクリア
+        // これによりブラウザ側のGoogle認証キャッシュもクリアされる
+        await WebBrowser.openBrowserAsync(
+          'https://accounts.google.com/Logout',
+          { createTask: false }
+        );
+      } catch (error) {
+        console.log("ℹ️ ブラウザセッションクリアスキップ:", error);
+      }
+    }
+    
+    console.log("✅ ログアウト完了");
+  };
+
+  /**
+   * 🔄 アカウント切り替え（ログアウト→再サインイン）
+   */
+  const switchAccount = async () => {
+    console.log("🔄 アカウント切り替え開始");
+    
+    // 1. 完全ログアウト
+    await signOut();
+    
+    // 2. 少し待ってから再サインイン
+    // ログアウト後すぐだとセッションが残っている可能性があるため
+    setTimeout(() => {
+      console.log("🔐 再サインイン開始");
+      promptAsync();
+    }, 1000);
   };
 
   return {
@@ -312,6 +360,7 @@ export const useGoogleDrive = () => {
     googleRequest,
     googleResponse,
     signIn,
+    switchAccount,
     signOut,
     fetchGoogleDriveFiles,
     getDownloadUrl,

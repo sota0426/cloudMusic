@@ -4,8 +4,9 @@ import { GoogleDriveFile, useGoogleDrive } from "@/provider/useGoogleDrive";
 import { useOfflineStorage } from "@/provider/useOfflineStorage.ts";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Platform, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Modal, Platform, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ROOT_ID = "root";
@@ -28,9 +29,11 @@ export default function GoogleDriveFilesScreen() {
   const {
     offlineFiles,
     downloadFile,
+    downloadMultipleFiles,
     deleteFile,
     getLocalFilePath,
     downloadTasks,
+    getActiveDownloadCount,
   } = useOfflineStorage();
 
   const {
@@ -44,6 +47,8 @@ export default function GoogleDriveFilesScreen() {
   const [currentFolderId, setCurrentFolderId] = useState(ROOT_ID);
   const [folderHistory, setFolderHistory] = useState<string[]>([]);
   const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
+  const [isBatchDownloading, setIsBatchDownloading] = useState(false);
+  const [showBatchProgress, setShowBatchProgress] = useState(false);
 
   const isNative = Platform.OS !== 'web';
 
@@ -203,6 +208,79 @@ export default function GoogleDriveFilesScreen() {
   };
 
   /**
+   * 📦 フォルダ内の全音楽ファイルを一括ダウンロード
+   */
+  const handleBatchDownloadFolder = async () => {
+    if (!isNative || !accessToken) {
+      Alert.alert("非対応", "ダウンロードはモバイルアプリでのみ利用可能です");
+      return;
+    }
+
+    // 現在のフォルダ内の音楽ファイルのみを取得
+    const audioFiles = files.filter(file => isAudioFile(file));
+
+    if (audioFiles.length === 0) {
+      Alert.alert("対象なし", "このフォルダには音楽ファイルがありません");
+      return;
+    }
+
+    // 既にダウンロード済みのファイルを確認
+    const offlineFileIds = new Set(offlineFiles.map(f => f.id));
+    const filesToDownload = audioFiles.filter(file => !offlineFileIds.has(file.id));
+
+    if (filesToDownload.length === 0) {
+      Alert.alert("完了", "このフォルダの全ての音楽ファイルは既にダウンロード済みです");
+      return;
+    }
+
+    Alert.alert(
+      "一括ダウンロード",
+      `${filesToDownload.length}個の音楽ファイルをダウンロードしますか?\n\n` +
+      `(既にダウンロード済み: ${audioFiles.length - filesToDownload.length}個)`,
+      [
+        { text: "キャンセル", style: "cancel" },
+        {
+          text: "ダウンロード",
+          onPress: async () => {
+            setIsBatchDownloading(true);
+            setShowBatchProgress(true);
+
+            try {
+              // ダウンロードアイテムを作成
+              const downloadItems = filesToDownload.map((file) => ({
+                fileId: file.id,
+                fileName: file.name,
+                downloadUrl: `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+                mimeType: file.mimeType,
+                source: 'googledrive' as const,
+              }));
+
+              // 一括ダウンロード実行（最大3つ同時）
+              const result = await downloadMultipleFiles(downloadItems, 3);
+
+              Alert.alert(
+                "完了",
+                `ダウンロードが完了しました\n\n` +
+                `成功: ${result.succeeded}個\n` +
+                `失敗: ${result.failed}個\n` +
+                `合計: ${result.total}個`
+              );
+
+            } catch (error) {
+              console.error("一括ダウンロードエラー:", error);
+              Alert.alert("エラー", "一括ダウンロードに失敗しました");
+            } finally {
+              setIsBatchDownloading(false);
+              // モーダルは少し遅れて閉じる
+              setTimeout(() => setShowBatchProgress(false), 2000);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  /**
    * 🗑️ オフラインファイル削除
    */
   const handleDeleteOfflineFile = async (item: GoogleDriveFile) => {
@@ -287,19 +365,110 @@ export default function GoogleDriveFilesScreen() {
     <SafeAreaView className="flex-1 bg-black p-4">
       {/* ヘッダー */}
       <View className="flex-row items-center mb-4 justify-between">
-        <View className="flex-row">
+        <View className="flex-row items-center">
           <Entypo name="google-drive" size={24} color="#4285F4" />
           <Text className="text-white text-2xl ml-2">
             {loading ? "ロード中..." : "Google Drive"}
           </Text>
+          {/* アクティブなダウンロード数を表示 */}
+          {getActiveDownloadCount() > 0 && (
+            <View className="ml-2 bg-blue-600 px-2 py-1 rounded-full">
+              <Text className="text-white text-xs font-semibold">
+                DL中: {getActiveDownloadCount()}
+              </Text>
+            </View>
+          )}
         </View>
-        {!loading && (
-          <Pressable onPress={handleFetchGoogleDriveFiles} className="ml-2 items-center">
-            <AntDesign name="reload" size={16} color="white" />
-          </Pressable>
-        )}
+        <View className="flex-row items-center">
+          {/* 一括ダウンロードボタン */}
+          {!loading && currentFolderId !== ROOT_ID && isNative && (
+            <Pressable 
+              onPress={handleBatchDownloadFolder}
+              className="mr-2 bg-blue-600 px-3 py-2 rounded-lg flex-row items-center"
+              disabled={isBatchDownloading}
+            >
+              <MaterialIcons name="cloud-download" size={16} color="white" />
+              <Text className="text-white text-xs ml-1 font-semibold">一括DL</Text>
+            </Pressable>
+          )}
+          {!loading && (
+            <Pressable onPress={handleFetchGoogleDriveFiles} className="ml-2 items-center">
+              <AntDesign name="reload" size={16} color="white" />
+            </Pressable>
+          )}
+          {loading && <ActivityIndicator size="small" color="white" className="ml-2" />}
+        </View>
       </View>
-      {loading && <ActivityIndicator size="small" color="white" className="ml-2" />}
+
+      {/* 一括ダウンロード進行状況モーダル */}
+      <Modal
+        transparent
+        visible={showBatchProgress}
+        animationType="fade"
+      >
+        <View className="flex-1 justify-center items-center bg-black/80">
+          <View className="bg-gray-800 p-6 rounded-lg w-4/5 max-w-md">
+            <Text className="text-white text-lg font-semibold mb-4 text-center">
+              一括ダウンロード中
+            </Text>
+            
+            {/* ダウンロードタスク一覧 */}
+            <View className="max-h-80">
+              {Array.from(downloadTasks.values()).map((task) => (
+                <View key={task.fileId} className="mb-3 p-3 bg-gray-900 rounded">
+                  <Text className="text-white text-sm mb-1" numberOfLines={1}>
+                    {task.fileName}
+                  </Text>
+                  
+                  <View className="flex-row items-center">
+                    {task.status === 'pending' && (
+                      <>
+                        <View className="w-2 h-2 bg-gray-400 rounded-full mr-2" />
+                        <Text className="text-gray-400 text-xs">待機中...</Text>
+                      </>
+                    )}
+                    {task.status === 'downloading' && (
+                      <>
+                        <ActivityIndicator size="small" color="#3b82f6" />
+                        <View className="flex-1 mx-2">
+                          <View className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <View 
+                              className="h-full bg-blue-500 rounded-full"
+                              style={{ width: `${task.progress}%` }}
+                            />
+                          </View>
+                        </View>
+                        <Text className="text-blue-400 text-xs">{task.progress}%</Text>
+                      </>
+                    )}
+                    {task.status === 'completed' && (
+                      <>
+                        <AntDesign name="check-circle" size={16} color="#10b981" />
+                        <Text className="text-green-400 text-xs ml-2">完了</Text>
+                      </>
+                    )}
+                    {task.status === 'failed' && (
+                      <>
+                        <AntDesign name="close-circle" size={16} color="#ef4444" />
+                        <Text className="text-red-400 text-xs ml-2">失敗</Text>
+                      </>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            {!isBatchDownloading && (
+              <Pressable
+                onPress={() => setShowBatchProgress(false)}
+                className="mt-4 bg-blue-600 p-3 rounded-lg"
+              >
+                <Text className="text-white text-center font-semibold">閉じる</Text>
+              </Pressable>
+            )}
+          </View>
+        </View>
+      </Modal>
 
       {/* 戻るボタン */}
       {currentFolderId !== ROOT_ID && (
@@ -344,15 +513,6 @@ export default function GoogleDriveFilesScreen() {
               {isCurrentAudio && !isPlaying && (
                 <View className="flex-row items-center ml-4 mb-2">
                   <Text className="text-yellow-400 text-xs">一時停止中</Text>
-                </View>
-              )}
-
-              {isDownloading && (
-                <View className="flex-row items-center ml-4 mb-2">
-                  <ActivityIndicator size="small" color="#3b82f6" />
-                  <Text className="text-blue-400 text-xs ml-2">
-                    ダウンロード中... {downloadProgress}%
-                  </Text>
                 </View>
               )}
             </View>
